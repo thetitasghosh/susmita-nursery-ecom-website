@@ -1,47 +1,71 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Navbar } from '@/components/layout/navbar'
-import { Footer } from '@/components/layout/footer'
-import { Button } from '@/components/ui/button'
-import { Heart, ShoppingCart, Star, Leaf, Droplet, Sun } from 'lucide-react'
-import { motion } from 'framer-motion'
-
-// Mock product data
-const productDetails: Record<number, any> = {
-  1: {
-    id: 1,
-    name: 'Monstera Deliciosa',
-    category: 'Indoor Plants',
-    price: '$49.99',
-    rating: 4.8,
-    reviews: 128,
-    image: '🌿',
-    description:
-      'The iconic Monstera Deliciosa, also known as the Swiss Cheese Plant, is a stunning tropical plant perfect for any indoor space. Known for its distinctive split leaves and climbing nature.',
-    details: {
-      light: 'Bright, indirect light',
-      water: 'Water when soil is dry',
-      humidity: 'Moderate to high',
-      temperature: '65-75°F',
-      soil: 'Well-draining potting soil',
-    },
-    sizes: ['Small (6-8 inch)', 'Medium (10-12 inch)', 'Large (14-16 inch)'],
-    careInstructions: [
-      'Allow top inch of soil to dry between waterings',
-      'Provide bright, indirect light',
-      'Wipe leaves monthly with soft cloth',
-      'Fertilize monthly during growing season',
-      'Support with moss pole as plant grows',
-    ],
-  },
+import { useState } from "react";
+import { Navbar } from "@/components/layout/navbar";
+import { Footer } from "@/components/layout/footer";
+import { Button } from "@/components/ui/button";
+import { Heart, ShoppingCart, Star, Leaf, Droplet, Sun } from "lucide-react";
+import { motion } from "framer-motion";
+interface ProductCare {
+  light: string;
+  water: string;
+  humidity: string;
+  temperature: string;
+  soil: string;
 }
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
-  const productId = parseInt(params.id)
-  const product = productDetails[productId] || productDetails[1]
-  const [isWishlisted, setIsWishlisted] = useState(false)
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0])
+interface Product {
+  id: number;
+  name: string;
+  category: string;
+  price: string;
+  rating: number;
+  reviews: number;
+  image: string;
+  description: string;
+  details: ProductCare;
+  sizes: string[];
+  careInstructions: string[];
+}
+// Mock product data
+const productDetails: Record<number, Product> = {
+  1: {
+    id: 1,
+    name: "Monstera Deliciosa",
+    category: "Indoor Plants",
+    price: "$49.99",
+    rating: 4.8,
+    reviews: 128,
+    image: "🌿",
+    description:
+      "The iconic Monstera Deliciosa, also known as the Swiss Cheese Plant, is a stunning tropical plant perfect for any indoor space. Known for its distinctive split leaves and climbing nature.",
+    details: {
+      light: "Bright, indirect light",
+      water: "Water when soil is dry",
+      humidity: "Moderate to high",
+      temperature: "65-75°F",
+      soil: "Well-draining potting soil",
+    },
+    sizes: ["Small (6-8 inch)", "Medium (10-12 inch)", "Large (14-16 inch)"],
+    careInstructions: [
+      "Allow top inch of soil to dry between waterings",
+      "Provide bright, indirect light",
+      "Wipe leaves monthly with soft cloth",
+      "Fertilize monthly during growing season",
+      "Support with moss pole as plant grows",
+    ],
+  },
+};
+
+export default function ProductDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const productId = parseInt(params.id);
+  const product = productDetails[productId] || productDetails[1];
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -84,8 +108,8 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                       size={20}
                       className={
                         i < Math.floor(product.rating)
-                          ? 'fill-accent text-accent'
-                          : 'text-border'
+                          ? "fill-accent text-accent"
+                          : "text-border"
                       }
                     />
                   ))}
@@ -116,8 +140,8 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                       onClick={() => setSelectedSize(size)}
                       className={`w-full p-3 rounded-lg border-2 transition-all ${
                         selectedSize === size
-                          ? 'border-primary bg-primary/10 text-primary font-semibold'
-                          : 'border-border bg-card text-foreground hover:border-primary/50'
+                          ? "border-primary bg-primary/10 text-primary font-semibold"
+                          : "border-border bg-card text-foreground hover:border-primary/50"
                       }`}
                     >
                       {size}
@@ -128,7 +152,10 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
               {/* Action Buttons */}
               <div className="flex gap-3 mb-8">
-                <Button size="lg" className="flex-1 bg-primary hover:bg-primary/90">
+                <Button
+                  size="lg"
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   Add to Cart
                 </Button>
@@ -136,19 +163,21 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                   size="lg"
                   variant="outline"
                   onClick={() => setIsWishlisted(!isWishlisted)}
-                  className={isWishlisted ? 'bg-accent/10' : ''}
+                  className={isWishlisted ? "bg-accent/10" : ""}
                 >
                   <Heart
                     className="w-5 h-5"
-                    fill={isWishlisted ? 'currentColor' : 'none'}
-                    color={isWishlisted ? '#4a9d6f' : 'currentColor'}
+                    fill={isWishlisted ? "currentColor" : "none"}
+                    color={isWishlisted ? "#4a9d6f" : "currentColor"}
                   />
                 </Button>
               </div>
 
               {/* Quick Care Facts */}
               <div className="bg-card border border-border rounded-lg p-6 mb-8">
-                <h3 className="font-semibold text-foreground mb-4">Quick Care</h3>
+                <h3 className="font-semibold text-foreground mb-4">
+                  Quick Care
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-start gap-3">
                     <Sun className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
@@ -184,14 +213,18 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
               Care Instructions
             </h2>
             <ul className="space-y-3">
-              {product.careInstructions.map((instruction, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary font-semibold text-sm flex-shrink-0">
-                    {index + 1}
-                  </span>
-                  <span className="text-foreground pt-0.5">{instruction}</span>
-                </li>
-              ))}
+              {product.careInstructions.map(
+                (instruction: string, index: number) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary font-semibold text-sm flex-shrink-0">
+                      {index + 1}
+                    </span>
+                    <span className="text-foreground pt-0.5">
+                      {instruction}
+                    </span>
+                  </li>
+                ),
+              )}
             </ul>
           </motion.div>
         </div>
@@ -199,5 +232,5 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
       <Footer />
     </main>
-  )
+  );
 }

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
-import { Camera, Smartphone, Download, ArrowRight } from 'lucide-react'
+import { Camera, Smartphone, Download, } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function ARExperiencePage() {

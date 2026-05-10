@@ -8,12 +8,12 @@ import Image from 'next/image'
 import {
   Flower2,
   Sprout,
-  Trees,
+  // Trees,
   Leaf,
   Wind,
-  Sun,
-  Zap,
-  Droplet,
+  // Sun,
+  // Zap,
+  // Droplet,
 } from 'lucide-react'
 
 const categories = [
