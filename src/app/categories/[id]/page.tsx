@@ -6,71 +6,87 @@ import { Footer } from '@/components/layout/footer'
 import { ProductCard } from '@/components/products/product-card'
 import { ChevronDown } from 'lucide-react'
 import { motion } from 'framer-motion'
+interface CategoryProduct {
+  id: number;
+  name: string;
+  category: string;
+  price: string;
+  rating: number;
+  reviews: number;
+  image: string;
+}
 
-const categoryData: Record<number, any> = {
+interface Category {
+  id: number;
+  name: string;
+  description: string;
+  count: number;
+  products: CategoryProduct[];
+}
+const categoryData: Record<number, Category> = {
   1: {
     id: 1,
-    name: 'Indoor Plants',
-    description: 'Perfect for homes and offices',
+    name: "Indoor Plants",
+    description: "Perfect for homes and offices",
     count: 24,
     products: [
       {
         id: 1,
-        name: 'Monstera Deliciosa',
-        category: 'Indoor Plants',
-        price: '$49.99',
+        name: "Monstera Deliciosa",
+        category: "Indoor Plants",
+        price: "$49.99",
         rating: 4.8,
         reviews: 128,
-        image: '🌿',
+        image: "🌿",
       },
       {
         id: 3,
-        name: 'Fiddle Leaf Fig',
-        category: 'Indoor Plants',
-        price: '$59.99',
+        name: "Fiddle Leaf Fig",
+        category: "Indoor Plants",
+        price: "$59.99",
         rating: 4.7,
         reviews: 92,
-        image: '🍃',
+        image: "🍃",
       },
       {
         id: 5,
-        name: 'Pothos',
-        category: 'Indoor Plants',
-        price: '$24.99',
+        name: "Pothos",
+        category: "Indoor Plants",
+        price: "$24.99",
         rating: 4.8,
         reviews: 178,
-        image: '🌿',
+        image: "🌿",
       },
       {
         id: 6,
-        name: 'Boston Fern',
-        category: 'Indoor Plants',
-        price: '$39.99',
+        name: "Boston Fern",
+        category: "Indoor Plants",
+        price: "$39.99",
         rating: 4.6,
         reviews: 67,
-        image: '🌱',
+        image: "🌱",
       },
       {
         id: 9,
-        name: 'Spider Plant',
-        category: 'Indoor Plants',
-        price: '$19.99',
+        name: "Spider Plant",
+        category: "Indoor Plants",
+        price: "$19.99",
         rating: 4.9,
         reviews: 234,
-        image: '🌿',
+        image: "🌿",
       },
       {
         id: 11,
-        name: 'Rubber Plant',
-        category: 'Indoor Plants',
-        price: '$44.99',
+        name: "Rubber Plant",
+        category: "Indoor Plants",
+        price: "$44.99",
         rating: 4.7,
         reviews: 110,
-        image: '🌳',
+        image: "🌳",
       },
     ],
   },
-}
+};
 
 export default function CategoryDetailPage({ params }: { params: { id: string } }) {
   const categoryId = parseInt(params.id)
