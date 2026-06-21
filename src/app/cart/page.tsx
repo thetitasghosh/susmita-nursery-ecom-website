@@ -6,159 +6,203 @@ import { Button } from '@/components/ui/button'
 import { Plus, Minus, Trash2, ShoppingCart, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-
-const mockCartItems = [
-  {
-    id: 1,
-    name: 'Monstera Deliciosa',
-    price: 49.99,
-    quantity: 1,
-    image: '🌿',
-  },
-  {
-    id: 2,
-    name: 'Peace Lily',
-    price: 34.99,
-    quantity: 2,
-    image: '🌱',
-  },
-]
+import Image from 'next/image'
+import { useShop } from '@/lib/shop-context'
 
 export default function CartPage() {
-  const subtotal = mockCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const { cart, removeFromCart, updateCartQuantity, cartSubtotal, clearCart } = useShop()
+
+  const subtotal = cartSubtotal
   const tax = subtotal * 0.1
   const total = subtotal + tax
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col bg-background">
       <Navbar />
 
       <div className="flex-1 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          
           {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <h1 className="text-4xl font-bold text-foreground mb-2 flex items-center gap-3">
-              <ShoppingCart size={32} className="text-primary" />
+            <h1 className="text-4xl font-serif font-bold text-[#0d592f] mb-2 flex items-center gap-3">
+              <ShoppingCart size={32} />
               Shopping Cart
             </h1>
-            <p className="text-muted-foreground">
-              You have {mockCartItems.length} item(s) in your cart
+            <p className="text-xs text-muted-foreground font-light">
+              You have {cart.length} item(s) in your cart
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="lg:col-span-2"
-            >
-              <div className="space-y-4">
-                {mockCartItems.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="flex gap-4 p-6 rounded-lg border border-border bg-card hover:border-accent/50 transition-all"
+          {cart.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* Cart Items */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="lg:col-span-2 space-y-4"
+              >
+                <div className="space-y-4">
+                  {cart.map((item, index) => (
+                    <motion.div
+                      key={`${item.product.id}-${item.selectedSize}`}
+                      initial={{ opacity: 0, x: -15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="flex gap-4 p-5 rounded-3xl border border-border bg-card hover:border-[#0d592f]/35 transition-all items-center justify-between"
+                    >
+                      {/* Image */}
+                      <div className="relative w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-muted/40 shadow-sm border border-neutral-100">
+                        <Image
+                          src={item.product.image}
+                          alt={item.product.name}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                        />
+                      </div>
+
+                      {/* Details */}
+                      <div className="flex-1 space-y-1 ml-2">
+                        <h3 className="font-serif font-bold text-foreground text-base leading-tight">
+                          {item.product.name}
+                        </h3>
+                        <p className="text-[10px] text-neutral-400 font-medium uppercase tracking-wide">
+                          Size: {item.selectedSize}
+                        </p>
+                        <p className="text-sm font-semibold text-[#0d592f]">
+                          ₹{item.product.price.toFixed(2)}
+                        </p>
+                      </div>
+
+                      {/* Quantity Selector */}
+                      <div className="flex items-center gap-2 border border-border/80 rounded-full px-2 py-1 bg-background shadow-sm flex-shrink-0">
+                        <button
+                          onClick={() => updateCartQuantity(item.product.id, item.selectedSize, item.quantity - 1)}
+                          className="p-1 hover:bg-muted rounded-full transition-colors cursor-pointer text-foreground"
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span className="w-6 text-center text-xs font-semibold text-foreground">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateCartQuantity(item.product.id, item.selectedSize, item.quantity + 1)}
+                          className="p-1 hover:bg-muted rounded-full transition-colors cursor-pointer text-foreground"
+                          aria-label="Increase quantity"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+
+                      {/* Remove Button */}
+                      <button
+                        onClick={() => removeFromCart(item.product.id, item.selectedSize)}
+                        className="p-2.5 hover:bg-destructive/10 rounded-full transition-colors cursor-pointer flex-shrink-0"
+                        aria-label="Remove item"
+                      >
+                        <Trash2 size={16} className="text-destructive" />
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <Link href="/products" className="inline-flex items-center text-xs font-semibold text-[#0d592f] hover:underline cursor-pointer">
+                    <ArrowRight size={14} className="mr-1.5 rotate-180" />
+                    <span>Continue Shopping</span>
+                  </Link>
+                  
+                  <button
+                    onClick={clearCart}
+                    className="ml-auto text-xs text-neutral-400 hover:text-destructive cursor-pointer font-light transition-colors"
                   >
-                    {/* Image */}
-                    <div className="w-24 h-24 rounded-lg bg-muted/50 flex items-center justify-center flex-shrink-0">
-                      <span className="text-5xl">{item.image}</span>
+                    Clear Shopping Cart
+                  </button>
+                </div>
+              </motion.div>
+
+              {/* Order Summary */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="h-fit sticky top-24"
+              >
+                <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
+                  <h2 className="font-serif font-bold text-foreground text-lg mb-4">
+                    Order Summary
+                  </h2>
+
+                  <div className="space-y-3 mb-4 pb-4 border-b border-border/60 text-xs font-light">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Subtotal</span>
+                      <span className="font-medium text-foreground">₹{subtotal.toFixed(2)}</span>
                     </div>
-
-                    {/* Details */}
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground mb-1">
-                        {item.name}
-                      </h3>
-                      <p className="text-2xl font-bold text-primary">
-                        ${item.price.toFixed(2)}
-                      </p>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Nursery Tax (10%)</span>
+                      <span className="font-medium text-foreground">₹{tax.toFixed(2)}</span>
                     </div>
-
-                    {/* Quantity */}
-                    <div className="flex items-center gap-2">
-                      <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                        <Minus size={18} className="text-foreground" />
-                      </button>
-                      <span className="w-8 text-center font-semibold text-foreground">
-                        {item.quantity}
-                      </span>
-                      <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                        <Plus size={18} className="text-foreground" />
-                      </button>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Delivery Fee</span>
+                      <span className="font-medium text-accent font-semibold">FREE</span>
                     </div>
+                  </div>
 
-                    {/* Remove */}
-                    <button className="p-2 hover:bg-destructive/10 rounded-lg transition-colors self-start">
-                      <Trash2 size={18} className="text-destructive" />
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
+                  <div className="flex justify-between items-center mb-6">
+                    <span className="font-bold text-foreground">Order Total</span>
+                    <span className="text-2xl font-serif font-bold text-[#0d592f]">
+                      ₹{total.toFixed(2)}
+                    </span>
+                  </div>
 
-              <Link href="/products" className="mt-6 inline-flex items-center text-primary hover:gap-2 transition-all">
-                <span>Continue Shopping</span>
-                <ArrowRight size={16} />
+                  <Button size="lg" className="w-full bg-[#023512] hover:bg-[#023512]/90 text-white rounded-full font-semibold cursor-pointer shadow-sm mb-3">
+                    Proceed to Checkout
+                  </Button>
+
+                  <Link href="/products" className="block w-full">
+                    <Button size="lg" variant="outline" className="w-full rounded-full border-border hover:bg-muted text-foreground cursor-pointer">
+                      Browse More Specimens
+                    </Button>
+                  </Link>
+
+                  {/* Note */}
+                  <div className="mt-6 p-4 bg-[#daf5e3]/20 border border-[#0d592f]/10 rounded-2xl">
+                    <p className="text-[10px] text-neutral-600 leading-normal font-light">
+                      <span className="font-semibold text-foreground">Payment Notice:</span> This is a demonstration sandbox check. No credit/debit charges will be made.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          ) : (
+            /* Empty Cart View */
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-20 bg-card border border-border/80 rounded-3xl"
+            >
+              <ShoppingCart size={48} className="mx-auto mb-4 text-neutral-300" />
+              <h2 className="text-2xl font-serif font-bold text-foreground mb-2">
+                Your cart is empty
+              </h2>
+              <p className="text-sm text-muted-foreground font-light mb-6">
+                Add some plants to bring life and fresh air to your home!
+              </p>
+              <Link href="/products">
+                <Button size="lg" className="bg-[#023512] hover:bg-[#023512]/90 text-white rounded-full font-semibold cursor-pointer shadow-sm">
+                  <ArrowRight size={14} className="mr-2 rotate-180" />
+                  Explore Specimens Catalog
+                </Button>
               </Link>
             </motion.div>
-
-            {/* Order Summary */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="h-fit sticky top-20"
-            >
-              <div className="bg-card border border-border rounded-lg p-6">
-                <h2 className="font-bold text-foreground text-lg mb-4">
-                  Order Summary
-                </h2>
-
-                <div className="space-y-3 mb-4 pb-4 border-b border-border">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Tax (10%)</span>
-                    <span>${tax.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Shipping</span>
-                    <span>Free</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center mb-6">
-                  <span className="font-bold text-foreground">Total</span>
-                  <span className="text-2xl font-bold text-primary">
-                    ${total.toFixed(2)}
-                  </span>
-                </div>
-
-                <Button size="lg" className="w-full bg-primary hover:bg-primary/90 mb-3">
-                  Proceed to Checkout
-                </Button>
-
-                <Button size="lg" variant="outline" className="w-full">
-                  Continue Shopping
-                </Button>
-
-                {/* Note */}
-                <div className="mt-6 p-4 bg-accent/10 rounded-lg">
-                  <p className="text-sm text-foreground">
-                    <span className="font-semibold">Note:</span> This is a demo cart. No actual purchases will be made.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+          )}
         </div>
       </div>
 
