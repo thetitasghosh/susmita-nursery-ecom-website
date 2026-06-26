@@ -1,41 +1,41 @@
 import Link from 'next/link'
-import { MapPin, Phone, Mail, Award, Sprout, ShieldCheck, Truck, Trees, HeartHandshake, Calendar } from 'lucide-react'
+import { MapPin, Phone, Mail, Calendar } from 'lucide-react'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
 
-  const trustIndicators = [
-    {
-      icon: <Award className="w-8 h-8 text-accent" />,
-      title: '40+ Years of Experience',
-      desc: 'Generations of horticultural expertise.',
-    },
-    {
-      icon: <Sprout className="w-8 h-8 text-accent" />,
-      title: '500+ Varieties of Plants',
-      desc: 'Healthy plants grown with care for stronger life.',
-    },
-    {
-      icon: <ShieldCheck className="w-8 h-8 text-accent" />,
-      title: 'Expert Advice',
-      desc: 'Guidance you can trust for every plant.',
-    },
-    {
-      icon: <Truck className="w-8 h-8 text-accent" />,
-      title: 'Safe & Fast Delivery',
-      desc: 'Secure packaging and timely arrival.',
-    },
-    {
-      icon: <Trees className="w-8 h-8 text-accent" />,
-      title: 'Landscape Services',
-      desc: 'Custom green spaces for every need.',
-    },
-    {
-      icon: <HeartHandshake className="w-8 h-8 text-accent" />,
-      title: 'After Sales Support',
-      desc: 'Always here for you, whenever you need.',
-    },
-  ]
+  // const trustIndicators = [
+  //   {
+  //     icon: <Award className="w-8 h-8 text-accent" />,
+  //     title: '40+ Years of Experience',
+  //     desc: 'Generations of horticultural expertise.',
+  //   },
+  //   {
+  //     icon: <Sprout className="w-8 h-8 text-accent" />,
+  //     title: '500+ Varieties of Plants',
+  //     desc: 'Healthy plants grown with care for stronger life.',
+  //   },
+  //   {
+  //     icon: <ShieldCheck className="w-8 h-8 text-accent" />,
+  //     title: 'Expert Advice',
+  //     desc: 'Guidance you can trust for every plant.',
+  //   },
+  //   {
+  //     icon: <Truck className="w-8 h-8 text-accent" />,
+  //     title: 'Safe & Fast Delivery',
+  //     desc: 'Secure packaging and timely arrival.',
+  //   },
+  //   {
+  //     icon: <Trees className="w-8 h-8 text-accent" />,
+  //     title: 'Landscape Services',
+  //     desc: 'Custom green spaces for every need.',
+  //   },
+  //   {
+  //     icon: <HeartHandshake className="w-8 h-8 text-accent" />,
+  //     title: 'After Sales Support',
+  //     desc: 'Always here for you, whenever you need.',
+  //   },
+  // ]
 
   return (
     <footer className="bg-primary-emerald text-white border-t border-primary/20">
