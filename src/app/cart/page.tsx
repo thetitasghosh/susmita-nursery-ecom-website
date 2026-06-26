@@ -3,7 +3,7 @@
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
-import { Plus, Minus, Trash2, ShoppingCart, ArrowRight } from 'lucide-react'
+import { Plus, Minus, Trash2, ShoppingCart, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
@@ -29,7 +29,7 @@ export default function CartPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <h1 className="text-4xl font-serif font-bold text-[#0d592f] mb-2 flex items-center gap-3">
+            <h1 className="text-4xl font-serif font-bold text-primary mb-2 flex items-center gap-3">
               <ShoppingCart size={32} />
               Shopping Cart
             </h1>
@@ -54,7 +54,7 @@ export default function CartPage() {
                       initial={{ opacity: 0, x: -15 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="flex gap-4 p-5 rounded-3xl border border-border bg-card hover:border-[#0d592f]/35 transition-all items-center justify-between"
+                      className="flex gap-4 p-5 rounded-3xl border border-border bg-card hover:border-primary/35 transition-all items-center justify-between"
                     >
                       {/* Image */}
                       <div className="relative w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-muted/40 shadow-sm border border-neutral-100">
@@ -75,7 +75,7 @@ export default function CartPage() {
                         <p className="text-[10px] text-neutral-400 font-medium uppercase tracking-wide">
                           Size: {item.selectedSize}
                         </p>
-                        <p className="text-sm font-semibold text-[#0d592f]">
+                        <p className="text-sm font-semibold text-primary tabular-nums">
                           ₹{item.product.price.toFixed(2)}
                         </p>
                       </div>
@@ -89,7 +89,7 @@ export default function CartPage() {
                         >
                           <Minus size={12} />
                         </button>
-                        <span className="w-6 text-center text-xs font-semibold text-foreground">
+                        <span className="w-6 text-center text-xs font-semibold text-foreground tabular-nums">
                           {item.quantity}
                         </span>
                         <button
@@ -114,8 +114,8 @@ export default function CartPage() {
                 </div>
 
                 <div className="flex gap-4 pt-4">
-                  <Link href="/products" className="inline-flex items-center text-xs font-semibold text-[#0d592f] hover:underline cursor-pointer">
-                    <ArrowRight size={14} className="mr-1.5 rotate-180" />
+                  <Link href="/products" className="inline-flex items-center text-xs font-semibold text-primary hover:underline cursor-pointer">
+                    <ArrowLeft size={14} className="mr-1.5" />
                     <span>Continue Shopping</span>
                   </Link>
                   
@@ -143,11 +143,11 @@ export default function CartPage() {
                   <div className="space-y-3 mb-4 pb-4 border-b border-border/60 text-xs font-light">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Subtotal</span>
-                      <span className="font-medium text-foreground">₹{subtotal.toFixed(2)}</span>
+                      <span className="font-medium text-foreground tabular-nums">₹{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Nursery Tax (10%)</span>
-                      <span className="font-medium text-foreground">₹{tax.toFixed(2)}</span>
+                      <span className="font-medium text-foreground tabular-nums">₹{tax.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Delivery Fee</span>
@@ -157,12 +157,12 @@ export default function CartPage() {
 
                   <div className="flex justify-between items-center mb-6">
                     <span className="font-bold text-foreground">Order Total</span>
-                    <span className="text-2xl font-serif font-bold text-[#0d592f]">
+                    <span className="text-2xl font-serif font-bold text-primary tabular-nums">
                       ₹{total.toFixed(2)}
                     </span>
                   </div>
 
-                  <Button size="lg" className="w-full bg-[#023512] hover:bg-[#023512]/90 text-white rounded-full font-semibold cursor-pointer shadow-sm mb-3">
+                  <Button size="lg" className="w-full bg-primary-emerald hover:bg-primary-emerald/90 text-white rounded-full font-semibold cursor-pointer shadow-sm mb-3">
                     Proceed to Checkout
                   </Button>
 
@@ -173,7 +173,7 @@ export default function CartPage() {
                   </Link>
 
                   {/* Note */}
-                  <div className="mt-6 p-4 bg-[#daf5e3]/20 border border-[#0d592f]/10 rounded-2xl">
+                  <div className="mt-6 p-4 bg-primary/5 border border-primary/10 rounded-2xl">
                     <p className="text-[10px] text-neutral-600 leading-normal font-light">
                       <span className="font-semibold text-foreground">Payment Notice:</span> This is a demonstration sandbox check. No credit/debit charges will be made.
                     </p>
@@ -196,8 +196,8 @@ export default function CartPage() {
                 Add some plants to bring life and fresh air to your home!
               </p>
               <Link href="/products">
-                <Button size="lg" className="bg-[#023512] hover:bg-[#023512]/90 text-white rounded-full font-semibold cursor-pointer shadow-sm">
-                  <ArrowRight size={14} className="mr-2 rotate-180" />
+                <Button size="lg" className="bg-primary-emerald hover:bg-primary-emerald/90 text-white rounded-full font-semibold cursor-pointer shadow-sm">
+                  <ArrowLeft size={14} className="mr-2" />
                   Explore Specimens Catalog
                 </Button>
               </Link>

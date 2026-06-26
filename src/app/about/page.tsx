@@ -36,7 +36,7 @@ export default function AboutPage() {
 
       <div className="flex-1">
         {/* Page Header */}
-        <section className="relative py-20 md:py-32 bg-gradient-to-b from-[#daf5e3]/30 via-transparent to-transparent border-b border-border/60">
+        <section className="relative py-20 md:py-32 bg-gradient-to-b from-primary/10 via-transparent to-transparent border-b border-border/60">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <motion.div
               initial={{ opacity: 0, y: 15 }}
@@ -45,7 +45,7 @@ export default function AboutPage() {
               className="max-w-3xl mx-auto"
             >
               <span className="text-xs uppercase tracking-wider text-accent font-semibold mb-3 block">Our Heritage</span>
-              <h1 className="text-4xl md:text-6xl font-serif font-bold text-[#0d592f] mb-6">
+              <h1 className="text-4xl md:text-6xl font-serif font-bold text-primary mb-6">
                 Cultivating Green Sanctuary
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed font-light">
@@ -110,7 +110,7 @@ export default function AboutPage() {
         <section className="py-16 md:py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#0d592f] mb-3">
+              <h2 className="text-2xl sm:text-4xl font-serif font-bold text-primary mb-3">
                 Core Botanical Values
               </h2>
               <div className="h-1 w-12 bg-accent mx-auto rounded-full mb-3" />
@@ -128,7 +128,7 @@ export default function AboutPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="p-8 rounded-3xl bg-card border border-border/80 shadow-sm hover:border-[#0d592f]/30 transition-all duration-300 flex flex-col sm:flex-row gap-6 items-start"
+                    className="p-8 rounded-3xl bg-card border border-border/80 shadow-sm hover:border-primary/30 transition-all duration-300 flex flex-col sm:flex-row gap-6 items-start"
                   >
                     {/* Plant image thumbnail replaces generic Lucide icons */}
                     <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 relative shadow-sm border border-neutral-100">
@@ -156,7 +156,7 @@ export default function AboutPage() {
         </section>
 
         {/* Clean, Non-AI-Generated Stats Section */}
-        <section className="py-16 bg-[#023512] text-white">
+        <section className="py-16 bg-primary-emerald text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               <div>

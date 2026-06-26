@@ -20,7 +20,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <Link href={`/products/${product.id}`}>
       <motion.div
         whileHover={{ y: -4 }}
-        className="group h-full bg-card border border-border/80 rounded-3xl overflow-hidden hover:border-[#0d592f]/30 transition-all duration-300 cursor-pointer flex flex-col justify-between"
+        className="group h-full bg-card border border-border/80 rounded-3xl overflow-hidden hover:border-primary/30 transition-all duration-300 cursor-pointer flex flex-col justify-between"
       >
         {/* Image Container */}
         <div className="relative overflow-hidden bg-muted/30 aspect-square flex items-center justify-center flex-shrink-0">
@@ -59,6 +59,11 @@ export function ProductCard({ product }: ProductCardProps) {
             <h3 className="font-serif font-bold text-foreground text-lg group-hover:text-primary transition-colors line-clamp-1">
               {product.name}
             </h3>
+            {product.scientificName && (
+              <p className="text-[11px] text-muted-foreground italic font-serif leading-none -mt-0.5 pb-1">
+                {product.scientificName}
+              </p>
+            )}
             
             {/* Rating */}
             <div className="flex items-center gap-1.5">
@@ -83,12 +88,12 @@ export function ProductCard({ product }: ProductCardProps) {
 
           {/* Footer details: Price and Action */}
           <div className="flex items-center justify-between pt-1">
-            <span className="font-serif font-bold text-[#0d592f] text-lg">
+            <span className="font-sans font-bold text-primary text-lg tabular-nums">
               ₹{product.price.toFixed(2)}
             </span>
             <Button
               size="sm"
-              className="bg-[#023512] hover:bg-[#023512]/90 text-white font-medium rounded-full px-4 py-1.5 text-xs cursor-pointer flex items-center gap-1.5 transition-all shadow-sm"
+              className="bg-primary-emerald hover:bg-primary-emerald/90 text-white font-medium rounded-full px-4 py-1.5 text-xs cursor-pointer flex items-center gap-1.5 transition-all shadow-sm"
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()

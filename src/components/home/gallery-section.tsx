@@ -2,58 +2,109 @@
 
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import Link from 'next/link'
+import { Leaf } from 'lucide-react'
 
-const galleryImages = [
-  { id: 1, image: '/images/plants/monstera-plant.jpg', title: 'Monstera Deliciosa' },
-  { id: 2, image: '/images/plants/rose-flowers.jpg', title: 'Rose Flowers' },
-  { id: 3, image: '/images/plants/orchid-flower.jpg', title: 'Orchid' },
-  { id: 4, image: '/images/plants/tulips-bouquet.jpg', title: 'Tulips' },
-  { id: 5, image: '/images/plants/lavender-plant.jpg', title: 'Lavender' },
-  { id: 6, image: '/images/plants/sunflower-garden.jpg', title: 'Sunflowers' },
+const editorialPanels = [
+  {
+    id: 1,
+    title: 'Indoor Jungle',
+    subtitle: 'Transform your indoor spaces into green sanctuaries.',
+    image: '/images/rooms/modern_loft_room.jpg',
+    href: '/products?category=Indoor Plants',
+    sizeClass: 'lg:col-span-2 h-[350px] sm:h-[450px]',
+  },
+  {
+    id: 2,
+    title: 'Terrace Gardens',
+    subtitle: 'Maximize sunlight with structured rooftop designs.',
+    image: '/images/rooms/garden_patio_terrace.jpg',
+    href: '/contact?service=Landscape Design',
+    sizeClass: 'lg:col-span-1 h-[350px] sm:h-[450px]',
+  },
+  {
+    id: 3,
+    title: 'Landscape Projects',
+    subtitle: 'Generational garden designs tailored for grand estates.',
+    image: '/images/rooms/landscape_project.jpg',
+    href: '/contact?service=Landscape Design',
+    sizeClass: 'lg:col-span-3 h-[400px] sm:h-[500px]',
+  },
 ]
 
 export function GallerySection() {
   return (
-    <section className="py-16 md:py-24 bg-background min-h-screen">
+    <section id="inspiration" className="py-20 md:py-28 bg-background border-b border-border/40 scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="text-center mb-16 space-y-3"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Our Plant Collection
+          <div className="flex items-center justify-center gap-2 text-primary font-semibold text-xs uppercase tracking-wider">
+            <Leaf size={14} className="text-secondary" />
+            <span>Design Ideas</span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground">
+            Inspiration & Editorial Section
           </h2>
-          <p className="text-lg text-muted-foreground">
-            Explore our diverse selection
+          <div className="h-1 w-12 bg-accent mx-auto rounded-full" />
+          <p className="text-sm sm:text-base text-muted-foreground font-light max-w-md mx-auto">
+            Explore curated design concepts for styling interiors and structural outdoor garden landscapes.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {galleryImages.map((item, index) => (
+        {/* Editorial Bento Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {editorialPanels.map((panel, index) => (
             <motion.div
-              key={item.id}
-              initial={{ opacity: 0, scale: 0.9 }}
+              key={panel.id}
+              initial={{ opacity: 0, scale: 0.96 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ scale: 1.05 }}
-              className="group relative h-48 md:h-56 rounded-2xl overflow-hidden cursor-pointer"
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              whileHover={{ scale: 0.99 }}
+              className={`relative ${panel.sizeClass} rounded-[32px] overflow-hidden border border-border/60 shadow-md group cursor-pointer`}
             >
-              <Image
-                src={item.image}
-                alt={item.title}
-                fill
-                className="object-cover group-hover:brightness-75 transition-all duration-300"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent flex items-end justify-center pb-4">
-                <h3 className="text-lg font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                  {item.title}
-                </h3>
-              </div>
+              <Link href={panel.href}>
+                <div className="relative w-full h-full">
+                  {/* Backdrop Image */}
+                  <Image
+                    src={panel.image}
+                    alt={panel.title}
+                    fill
+                    sizes="(max-w-1024px) 100vw, 50vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+
+                  {/* Elegant Dark Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-neutral-dark/90 via-neutral-dark/40 to-transparent z-10" />
+
+                  {/* Panel Copy */}
+                  <div className="absolute inset-0 z-20 p-8 sm:p-10 flex flex-col justify-end text-white">
+                    <span className="text-[9px] font-sans font-bold tracking-widest text-accent bg-accent/15 border border-accent/25 px-2.5 py-0.5 rounded-full uppercase w-max mb-3">
+                      Design Concept
+                    </span>
+                    <h3 className="font-serif font-bold text-2xl sm:text-3xl mb-2 text-white">
+                      {panel.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-neutral-300 font-light max-w-md leading-relaxed mb-4">
+                      {panel.subtitle}
+                    </p>
+                    <div className="flex items-center text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform">
+                      <span>Explore Projects</span>
+                      <span className="ml-1">→</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
             </motion.div>
           ))}
         </div>
+
       </div>
     </section>
   )

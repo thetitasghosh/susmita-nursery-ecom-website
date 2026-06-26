@@ -3,7 +3,7 @@
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
-import { Heart, ArrowRight } from 'lucide-react'
+import { Heart, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useShop } from '@/lib/shop-context'
@@ -29,7 +29,7 @@ export default function WishlistPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <h1 className="text-4xl font-serif font-bold text-[#0d592f] mb-2 flex items-center gap-3">
+            <h1 className="text-4xl font-serif font-bold text-primary mb-2 flex items-center gap-3">
               <Heart size={32} className="text-accent fill-accent animate-pulse" />
               My Wishlist
             </h1>
@@ -67,8 +67,8 @@ export default function WishlistPage() {
                 Add your favorite botanical specimens to save them for later!
               </p>
               <Link href="/products">
-                <Button size="lg" className="bg-[#023512] hover:bg-[#023512]/90 text-white rounded-full font-semibold cursor-pointer shadow-sm">
-                  <ArrowRight size={14} className="mr-2 rotate-180" />
+                <Button size="lg" className="bg-primary-emerald hover:bg-primary-emerald/90 text-white rounded-full font-semibold cursor-pointer shadow-sm">
+                  <ArrowLeft size={14} className="mr-2" />
                   Browse Specimens Catalog
                 </Button>
               </Link>
