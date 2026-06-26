@@ -39,11 +39,11 @@ export function Footer() {
 
   return (
     <footer className="bg-primary-emerald text-white border-t border-primary/20">
-      
+
       {/* Universal Footer Ribbon (Trust Indicators) */}
-      <div className="bg-primary-deep py-12 border-b border-primary-deepest/60">
+      {/* <div className="bg-primary-deep py-12 border-b border-primary-deepest/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8">
             {trustIndicators.map((item, idx) => (
               <div key={idx} className="flex flex-col items-center text-center p-4 rounded-2xl hover:bg-white/5 transition-colors duration-300">
                 <div className="mb-3 p-3 bg-white/5 rounded-2xl border border-white/10 shadow-inner">
@@ -59,11 +59,11 @@ export function Footer() {
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-          
+
           {/* Brand & Mission */}
           <div className="space-y-4">
             <div className="flex items-center gap-2.5">
