@@ -195,7 +195,7 @@ export default function ARExperiencePage() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.15 }}
-              className="flex justify-center gap-4"
+              className="flex md:flex-row justify-center flex-col gap-4"
             >
               <Button
                 onClick={scrollToVisualizer}
