@@ -54,12 +54,12 @@ function ContactContent() {
     {
       image: '/images/plants/peace-lily.jpg',
       title: 'Our Head Office',
-      details: 'Susmita Nursery Gardens, Green Park Lane, Kolkata, WB, 700091',
+      details: 'Anjangarh Sitala Mandir, Badkulla, Boalia, West Bengal 741121',
     },
     {
       image: '/images/plants/pothos-hanging.jpg',
       title: 'Horticulture Helpline',
-      details: '+91 33 2465 9876 / +91 98300 12345',
+      details: '099338 17580',
     },
     {
       image: '/images/plants/lavender-plant.jpg',
@@ -76,15 +76,15 @@ function ContactContent() {
   const greenhouseLocations = [
     {
       branch: 'Main Retail Greenhouses',
-      address: 'Green Park Road, EM Bypass Connector, Kolkata, WB, 700091',
-      phone: '+91 98300 12345',
+      address: 'Anjangarh Sitala Mandir, Badkulla, Boalia, West Bengal 741121',
+      phone: '099338 17580',
       desc: 'Our flagship nursery displaying over 400 species of indoor/outdoor plants, potting soils, and custom fiber planters.',
       image: '/images/plants/monstera-plant.jpg',
     },
     {
       branch: 'Botanical Farm & Propagator',
-      address: 'Kalyani Highway Junction, Madanpur, Nadia, WB, 741245',
-      phone: '+91 98300 67890',
+      address: 'Anjangarh Sitala Mandir, Badkulla, Boalia, West Bengal 741121',
+      phone: '099338 17580',
       desc: 'Our 10-acre propagation facility where our rare specimens, succulents, and specialty hybrid orchids are raised by botanists.',
       image: '/images/plants/bonsai-tree.jpg',
     },

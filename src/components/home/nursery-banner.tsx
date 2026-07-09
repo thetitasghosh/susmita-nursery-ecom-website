@@ -70,7 +70,7 @@ export function NurseryBanner() {
                   <Phone className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-semibold text-white">Hotline Contact</p>
-                    <p className="text-xs text-neutral-300">+91 98765 43210</p>
+                    <p className="text-xs text-neutral-300">099338 17580</p>
                   </div>
                 </div>
 
@@ -79,8 +79,8 @@ export function NurseryBanner() {
                   <div>
                     <p className="font-semibold text-white">Location Coordinates</p>
                     <p className="text-xs text-neutral-300 leading-normal">
-                      123 Green Valley, Botanical Road,<br />
-                      Your City, State – 123456
+                      Anjangarh Sitala Mandir, Badkulla,<br />
+                      Boalia, West Bengal 741121
                     </p>
                   </div>
                 </div>
@@ -88,7 +88,7 @@ export function NurseryBanner() {
 
               <div className="pt-2">
                 <a
-                  href="https://maps.google.com/?q=123+Green+Valley,Botanical+Road,Nadia"
+                  href="https://maps.google.com/?q=Anjangarh+Sitala+Mandir+Badkulla+Boalia+West+Bengal+741121"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full block"

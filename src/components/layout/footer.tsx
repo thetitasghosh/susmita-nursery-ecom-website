@@ -1,8 +1,9 @@
-import Link from 'next/link'
-import { MapPin, Phone, Mail, Calendar } from 'lucide-react'
+import Link from "next/link";
+import { MapPin, Phone, Mail, Calendar } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
-  const currentYear = new Date().getFullYear()
+  const currentYear = new Date().getFullYear();
 
   // const trustIndicators = [
   //   {
@@ -39,7 +40,6 @@ export function Footer() {
 
   return (
     <footer className="bg-primary-emerald text-white border-t border-primary/20">
-
       {/* Universal Footer Ribbon (Trust Indicators) */}
       {/* <div className="bg-primary-deep py-12 border-b border-primary-deepest/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -63,17 +63,34 @@ export function Footer() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-
           {/* Brand & Mission */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 bg-white text-primary-emerald rounded-xl flex items-center justify-center shadow-lg font-serif font-bold text-xl">
-                S
+            <Link
+              href="/"
+              className="flex items-center justify-start gap-2 group redd overflow-hidden "
+            >
+              <Image
+                src="/logos/logo-with-ring.jpeg"
+                alt="Susmita Nursery"
+                width={1000}
+                height={1000}
+                priority
+                quality={100}
+                className=" size-20  object-cover scal rounded-full"
+              />
+              <div className="flex flex-col">
+                <span className="font-serif font-extrabold text-3xl text-white leading-tight tracking-wide">
+                  Susmita <br /> Nursery
+                </span>
+                {/* <span className="text-[9px] text-primary-emerald font-sans uppercase tracking-widest font-semibold">
+                  Growing Beauty
+                </span> */}
               </div>
-              <span className="font-serif font-bold text-xl tracking-wide">Susmita Nursery</span>
-            </div>
+            </Link>
             <p className="text-xs text-neutral-300 font-light leading-relaxed">
-              &quot;Bring Nature Home.&quot; A premium plant and garden brand dedicated to bringing nature closer to homes and creating beautiful, sustainable green spaces.
+              &quot;Bring Nature Home.&quot; A premium plant and garden brand
+              dedicated to bringing nature closer to homes and creating
+              beautiful, sustainable green spaces.
             </p>
             <div className="text-xs text-accent font-medium italic">
               &quot;Growing Beauty Every Day&quot;
@@ -87,27 +104,42 @@ export function Footer() {
             </h3>
             <ul className="space-y-3 text-xs text-neutral-300 font-light">
               <li>
-                <Link href="/products?category=Indoor Plants" className="hover:text-white transition-colors">
+                <Link
+                  href="/products?category=Indoor Plants"
+                  className="hover:text-white transition-colors"
+                >
                   Indoor Plants
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=Outdoor Plants" className="hover:text-white transition-colors">
+                <Link
+                  href="/products?category=Outdoor Plants"
+                  className="hover:text-white transition-colors"
+                >
                   Outdoor Plants
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=Flowering Plants" className="hover:text-white transition-colors">
+                <Link
+                  href="/products?category=Flowering Plants"
+                  className="hover:text-white transition-colors"
+                >
                   Flowering Plants
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=Succulents" className="hover:text-white transition-colors">
+                <Link
+                  href="/products?category=Succulents"
+                  className="hover:text-white transition-colors"
+                >
                   Succulents & Cactus
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=Bonsai" className="hover:text-white transition-colors">
+                <Link
+                  href="/products?category=Bonsai"
+                  className="hover:text-white transition-colors"
+                >
                   Bonsai Collection
                 </Link>
               </li>
@@ -121,17 +153,26 @@ export function Footer() {
             </h3>
             <ul className="space-y-3.5 text-xs text-neutral-300 font-light">
               <li className="flex items-start gap-2.5">
-                <Calendar size={14} className="mt-0.5 text-accent flex-shrink-0" />
+                <Calendar
+                  size={14}
+                  className="mt-0.5 text-accent flex-shrink-0"
+                />
                 <div>
                   <p className="font-medium text-white">Timings</p>
                   <p>9:00 AM – 7:00 PM All Days</p>
                 </div>
               </li>
               <li className="flex items-start gap-2.5">
-                <MapPin size={14} className="mt-0.5 text-accent flex-shrink-0" />
+                <MapPin
+                  size={14}
+                  className="mt-0.5 text-accent flex-shrink-0"
+                />
                 <div>
                   <p className="font-medium text-white">Location Coordinates</p>
-                  <p className="leading-tight">123 Green Valley, Botanical Road, Your City, State – 123456</p>
+                  <p className="leading-tight">
+                    Anjangarh Sitala Mandir, Badkulla, Boalia, West Bengal
+                    741121
+                  </p>
                 </div>
               </li>
             </ul>
@@ -145,16 +186,11 @@ export function Footer() {
             <ul className="space-y-3.5 text-xs text-neutral-300 font-light">
               <li className="flex items-center gap-2.5">
                 <Phone size={14} className="text-accent" />
-                <span>+91 98765 43210</span>
+                <span>099338 17580</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail size={14} className="text-accent" />
                 <span>hello@susmitanursery.com</span>
-              </li>
-              <li className="pt-2">
-                <Link href="/contact?booking=true" className="inline-flex items-center justify-center px-4 py-2 bg-accent hover:bg-accent/90 text-neutral-900 text-[10px] font-bold uppercase tracking-wider rounded-full transition-colors shadow-sm">
-                  Book Consultation
-                </Link>
               </li>
             </ul>
           </div>
@@ -163,19 +199,23 @@ export function Footer() {
         {/* Social Links and Copyright */}
         <div className="border-t border-white/10 pt-8 mt-12 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-neutral-400 font-light">
           <p>
-            &copy; {currentYear} Susmita Nursery. All rights reserved. Generational Horticulture in Nadia, West Bengal.
+            &copy; {currentYear} Susmita Nursery. All rights reserved.
+            Generational Horticulture in Nadia, West Bengal.
           </p>
           <div className="flex gap-4">
             <Link href="/promo" className="hover:text-white transition-colors">
               Launch Announcement
             </Link>
             <span>•</span>
-            <Link href="/ar-experience" className="hover:text-white transition-colors">
+            <Link
+              href="/ar-experience"
+              className="hover:text-white transition-colors"
+            >
               Interactive AR Simulator
             </Link>
           </div>
         </div>
       </div>
     </footer>
-  )
+  );
 }

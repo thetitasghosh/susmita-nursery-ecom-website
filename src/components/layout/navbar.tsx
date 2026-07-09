@@ -1,86 +1,118 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useState } from 'react'
+import Link from "next/link";
+import { useState } from "react";
 import {
-  Menu, X, ShoppingCart, Heart, Search, User, Calendar,
-  ChevronDown, Leaf, ChevronRight, Home, Flower, Wrench,
-  FlaskConical, Info, Phone, Package
-} from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useShop } from '@/lib/shop-context'
-import { Button } from '@/components/ui/button'
+  Menu,
+  X,
+  ShoppingCart,
+  Heart,
+  Search,
+  User,
+  ChevronDown,
+  Leaf,
+  ChevronRight,
+  Home,
+  Flower,
+  Wrench,
+  FlaskConical,
+  Info,
+  Phone,
+  Package,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useShop } from "@/lib/shop-context";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export function Navbar() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
-  const [mobilePlantsOpen, setMobilePlantsOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const { cartCount, wishlist } = useShop()
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [mobilePlantsOpen, setMobilePlantsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { cartCount, wishlist } = useShop();
 
   const plantCategories = [
-    { name: 'Indoor Plants', href: '/products?category=Indoor Plants' },
-    { name: 'Outdoor Plants', href: '/products?category=Outdoor Plants' },
-    { name: 'Flowering Plants', href: '/products?category=Flowering Plants' },
-    { name: 'Fruit Plants', href: '/products?category=Fruit Plants' },
-    { name: 'Palms', href: '/products?category=Palms' },
-    { name: 'Succulents', href: '/products?category=Succulents' },
-    { name: 'Bonsai', href: '/products?category=Bonsai' },
-  ]
+    { name: "Indoor Plants", href: "/products?category=Indoor Plants" },
+    { name: "Outdoor Plants", href: "/products?category=Outdoor Plants" },
+    { name: "Flowering Plants", href: "/products?category=Flowering Plants" },
+    { name: "Fruit Plants", href: "/products?category=Fruit Plants" },
+    { name: "Palms", href: "/products?category=Palms" },
+    { name: "Succulents", href: "/products?category=Succulents" },
+    { name: "Bonsai", href: "/products?category=Bonsai" },
+  ];
 
   const navLinks = [
-    { label: 'Tools', href: '/products?category=Tools', icon: Wrench },
-    { label: 'Plant Medicine', href: '/products?category=Plant Medicine', icon: FlaskConical },
-    { label: 'About Us', href: '/about', icon: Info },
-    { label: 'Contact', href: '/contact', icon: Phone },
-  ]
+    { label: "Tools", href: "/products?category=Tools", icon: Wrench },
+    {
+      label: "Plant Medicine",
+      href: "/products?category=Plant Medicine",
+      icon: FlaskConical,
+    },
+    { label: "About Us", href: "/about", icon: Info },
+    { label: "Contact", href: "/contact", icon: Phone },
+  ];
 
   const closeMenu = () => {
-    setIsOpen(false)
-    setMobilePlantsOpen(false)
-  }
+    setIsOpen(false);
+    setMobilePlantsOpen(false);
+  };
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border transition-all duration-300">
+      <nav className="sticky top-0 z-50 bg-white backdrop-blur-md border-b border-border transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
-                <Leaf className="text-white w-5 h-5" />
-              </div>
-              <div className="flex flex-col">
+            <Link
+              href="/"
+              className="flex items-center gap-2.5 group redd overflow-hidden"
+            >
+              <Image
+                src="/logos/susmita-nursery-wordmark-logo.svg"
+                alt="Susmita Nursery"
+                width={1000}
+                height={1000}
+                priority
+                quality={100}
+                className=" h-20 w-52  object-cover scale-150"
+              />
+              {/* <div className="flex flex-col">
                 <span className="font-serif font-bold text-xl leading-tight text-foreground tracking-wide">
                   Susmita Nursery
                 </span>
                 <span className="text-[9px] text-primary-emerald font-sans uppercase tracking-widest font-semibold">
                   Growing Beauty
                 </span>
-              </div>
+              </div> */}
             </Link>
 
             {/* Desktop Menu */}
             <div className="hidden xl:flex items-center gap-6 font-sans text-sm font-medium">
-              <Link href="/" className="text-foreground hover:text-primary transition-colors py-2">
+              <Link
+                href="/"
+                className="text-foreground hover:text-primary transition-colors py-2"
+              >
                 Home
               </Link>
 
               {/* Plants Dropdown */}
               <div
                 className="relative py-2"
-                onMouseEnter={() => setActiveDropdown('plants')}
+                onMouseEnter={() => setActiveDropdown("plants")}
                 onMouseLeave={() => setActiveDropdown(null)}
               >
                 <button className="flex items-center gap-1 text-foreground hover:text-primary transition-colors cursor-pointer">
                   <span>Plants</span>
-                  <ChevronDown size={14} className={`transition-transform duration-300 ${activeDropdown === 'plants' ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform duration-300 ${activeDropdown === "plants" ? "rotate-180" : ""}`}
+                  />
                 </button>
 
                 <AnimatePresence>
-                  {activeDropdown === 'plants' && (
+                  {activeDropdown === "plants" && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -115,7 +147,6 @@ export function Navbar() {
 
             {/* Interactive Utility Tokens & CTA */}
             <div className="flex items-center gap-2 sm:gap-4">
-
               {/* Search Toggle */}
               <div className="relative">
                 <button
@@ -142,7 +173,11 @@ export function Navbar() {
                         className="flex-1 text-xs border border-border px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-primary bg-background font-sans"
                       />
                       <Link href={`/products?search=${searchQuery}`}>
-                        <Button size="sm" onClick={() => setSearchOpen(false)} className="rounded-xl bg-primary">
+                        <Button
+                          size="sm"
+                          onClick={() => setSearchOpen(false)}
+                          className="rounded-xl bg-primary"
+                        >
                           Go
                         </Button>
                       </Link>
@@ -152,7 +187,10 @@ export function Navbar() {
               </div>
 
               {/* Wishlist */}
-              <Link href="/wishlist" className="p-2.5 hover:bg-muted rounded-full transition-colors relative hidden sm:inline-flex">
+              <Link
+                href="/wishlist"
+                className="p-2.5 hover:bg-muted rounded-full transition-colors relative hidden sm:inline-flex"
+              >
                 <Heart size={18} className="text-foreground" />
                 {wishlist.length > 0 && (
                   <span className="absolute top-1 right-1 w-4 h-4 bg-primary text-white rounded-full text-[9px] flex items-center justify-center font-bold animate-pulse-slow">
@@ -162,26 +200,24 @@ export function Navbar() {
               </Link>
 
               {/* User Profile */}
-              <Link href="/about" className="p-2.5 hover:bg-muted rounded-full transition-colors hidden sm:inline-flex">
+              <Link
+                href="/about"
+                className="p-2.5 hover:bg-muted rounded-full transition-colors hidden sm:inline-flex"
+              >
                 <User size={18} className="text-foreground" />
               </Link>
 
               {/* Shopping Cart */}
-              <Link href="/cart" className="p-2.5 hover:bg-muted rounded-full transition-colors relative">
+              <Link
+                href="/cart"
+                className="p-2.5 hover:bg-muted rounded-full transition-colors relative"
+              >
                 <ShoppingCart size={18} className="text-foreground" />
                 {cartCount > 0 && (
                   <span className="absolute top-1 right-1 w-4 h-4 bg-accent text-accent-foreground rounded-full text-[9px] flex items-center justify-center font-bold">
                     {cartCount}
                   </span>
                 )}
-              </Link>
-
-              {/* Book a Visit CTA */}
-              <Link href="/contact?booking=true" className="hidden lg:inline-flex">
-                <Button className="bg-primary-emerald hover:bg-primary text-white font-semibold rounded-full px-6 flex items-center gap-2 shadow-sm border border-primary/20 cursor-pointer">
-                  <Calendar size={15} />
-                  <span>Book a Visit</span>
-                </Button>
               </Link>
 
               {/* Mobile Menu Hamburger */}
@@ -215,10 +251,10 @@ export function Navbar() {
             {/* Sheet Panel */}
             <motion.aside
               key="sheet-panel"
-              initial={{ x: '100%' }}
+              initial={{ x: "100%" }}
               animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', stiffness: 320, damping: 38 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 38 }}
               className="fixed inset-y-0 right-0 z-[70] w-[280px] sm:w-[320px] flex flex-col bg-primary-emerald text-white shadow-2xl overflow-hidden"
             >
               {/* Sheet Header */}
@@ -227,7 +263,9 @@ export function Navbar() {
                   <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center">
                     <Leaf className="text-white w-4 h-4" />
                   </div>
-                  <span className="font-serif font-bold text-lg text-white tracking-wide">Menu</span>
+                  <span className="font-serif font-bold text-lg text-white tracking-wide">
+                    Menu
+                  </span>
                 </div>
                 <button
                   onClick={closeMenu}
@@ -240,15 +278,19 @@ export function Navbar() {
 
               {/* Sheet Body — scrollable */}
               <div className="flex-1 overflow-y-auto px-4 py-5 space-y-1">
-
                 {/* Home */}
                 <Link
                   href="/"
                   onClick={closeMenu}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors group"
                 >
-                  <Home size={16} className="text-white/60 group-hover:text-white transition-colors" />
-                  <span className="text-sm font-medium text-white font-sans">Home</span>
+                  <Home
+                    size={16}
+                    className="text-white/60 group-hover:text-white transition-colors"
+                  />
+                  <span className="text-sm font-medium text-white font-sans">
+                    Home
+                  </span>
                 </Link>
 
                 {/* Plants Accordion */}
@@ -258,12 +300,17 @@ export function Navbar() {
                     className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
-                      <Flower size={16} className="text-white/60 group-hover:text-white transition-colors" />
-                      <span className="text-sm font-medium text-white font-sans">Plants</span>
+                      <Flower
+                        size={16}
+                        className="text-white/60 group-hover:text-white transition-colors"
+                      />
+                      <span className="text-sm font-medium text-white font-sans">
+                        Plants
+                      </span>
                     </div>
                     <ChevronRight
                       size={14}
-                      className={`text-white/50 transition-transform duration-200 ${mobilePlantsOpen ? 'rotate-90' : ''}`}
+                      className={`text-white/50 transition-transform duration-200 ${mobilePlantsOpen ? "rotate-90" : ""}`}
                     />
                   </button>
 
@@ -271,7 +318,7 @@ export function Navbar() {
                     {mobilePlantsOpen && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
+                        animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden"
@@ -295,7 +342,7 @@ export function Navbar() {
 
                 {/* Other nav links */}
                 {navLinks.map((link) => {
-                  const Icon = link.icon
+                  const Icon = link.icon;
                   return (
                     <Link
                       key={link.label}
@@ -303,10 +350,15 @@ export function Navbar() {
                       onClick={closeMenu}
                       className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors group"
                     >
-                      <Icon size={16} className="text-white/60 group-hover:text-white transition-colors" />
-                      <span className="text-sm font-medium text-white font-sans">{link.label}</span>
+                      <Icon
+                        size={16}
+                        className="text-white/60 group-hover:text-white transition-colors"
+                      />
+                      <span className="text-sm font-medium text-white font-sans">
+                        {link.label}
+                      </span>
                     </Link>
-                  )
+                  );
                 })}
 
                 {/* Divider */}
@@ -319,8 +371,13 @@ export function Navbar() {
                   className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <Heart size={16} className="text-white/60 group-hover:text-white transition-colors" />
-                    <span className="text-sm font-medium text-white font-sans">Wishlist</span>
+                    <Heart
+                      size={16}
+                      className="text-white/60 group-hover:text-white transition-colors"
+                    />
+                    <span className="text-sm font-medium text-white font-sans">
+                      Wishlist
+                    </span>
                   </div>
                   {wishlist.length > 0 && (
                     <span className="text-[9px] font-bold bg-accent text-accent-foreground rounded-full px-2 py-0.5 font-sans">
@@ -335,8 +392,13 @@ export function Navbar() {
                   className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <Package size={16} className="text-white/60 group-hover:text-white transition-colors" />
-                    <span className="text-sm font-medium text-white font-sans">Your Orders</span>
+                    <Package
+                      size={16}
+                      className="text-white/60 group-hover:text-white transition-colors"
+                    />
+                    <span className="text-sm font-medium text-white font-sans">
+                      Your Orders
+                    </span>
                   </div>
                   {cartCount > 0 && (
                     <span className="text-[9px] font-bold bg-accent text-accent-foreground rounded-full px-2 py-0.5 font-sans">
@@ -346,23 +408,20 @@ export function Navbar() {
                 </Link>
               </div>
 
-              {/* Sheet Footer — Book a Visit CTA + Brand */}
+              {/* Sheet Footer — Brand */}
               <div className="px-4 pb-6 pt-4 border-t border-white/10 space-y-4">
-                <Link href="/contact?booking=true" onClick={closeMenu} className="block">
-                  <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-full py-3 flex items-center justify-center gap-2 shadow-md cursor-pointer font-sans">
-                    <Calendar size={15} />
-                    <span>Book a Visit</span>
-                  </Button>
-                </Link>
-
                 {/* Mini brand footer */}
                 <div className="flex items-center gap-2 px-2 pt-2">
                   <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Leaf className="text-white/70 w-3.5 h-3.5" />
                   </div>
                   <div>
-                    <p className="text-[9px] font-serif font-bold text-white/80 leading-none">Susmita Nursery</p>
-                    <p className="text-[7px] text-white/40 font-sans mt-0.5">Copyright {new Date().getFullYear()}</p>
+                    <p className="text-[9px] font-serif font-bold text-white/80 leading-none">
+                      Susmita Nursery
+                    </p>
+                    <p className="text-[7px] text-white/40 font-sans mt-0.5">
+                      Copyright {new Date().getFullYear()}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -371,5 +430,5 @@ export function Navbar() {
         )}
       </AnimatePresence>
     </>
-  )
+  );
 }
