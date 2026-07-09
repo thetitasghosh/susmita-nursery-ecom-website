@@ -10,7 +10,7 @@ import {
   Search,
   User,
   ChevronDown,
-  Leaf,
+  // Leaf,
   ChevronRight,
   Home,
   Flower,
@@ -261,7 +261,15 @@ export function Navbar() {
               <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center">
-                    <Leaf className="text-white w-4 h-4" />
+                    <Image
+                      src="/logos/logo-with-ring.jpeg"
+                      alt="Susmita Nursery"
+                      width={1000}
+                      height={1000}
+                      priority
+                      quality={100}
+                      className="   object-cover scal rounded-full"
+                    />
                   </div>
                   <span className="font-serif font-bold text-lg text-white tracking-wide">
                     Menu
@@ -413,7 +421,15 @@ export function Navbar() {
                 {/* Mini brand footer */}
                 <div className="flex items-center gap-2 px-2 pt-2">
                   <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Leaf className="text-white/70 w-3.5 h-3.5" />
+                    <Image
+                      src="/logos/logo-with-ring.jpeg"
+                      alt="Susmita Nursery"
+                      width={1000}
+                      height={1000}
+                      priority
+                      quality={100}
+                      className="   object-cover scal rounded-full"
+                    />
                   </div>
                   <div>
                     <p className="text-[9px] font-serif font-bold text-white/80 leading-none">
