@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     "Badkulla",
   ],
   description:
-    "Cultivating green sanctuaries since 2015. Susmita Nursery merges expert horticultural practice with modern digital convenience, including interactive AR room-fitting tools. Discover resilient indoor plants, air-purifiers, succulents, and flowering specimens.",
+    "Cultivating green sanctuaries. Susmita Nursery merges expert horticultural practice with modern digital convenience, including interactive AR room-fitting tools. Discover resilient indoor plants, air-purifiers, succulents, and flowering specimens.",
   metadataBase: new URL("https://www.susmitanursery.com/"),
   alternates: {
     canonical: "/",
