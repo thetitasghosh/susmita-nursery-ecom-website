@@ -19,7 +19,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Susmita Nursery - Premium Plants & Gardening",
+  title: "Susmita Nursery | Indoor Plants, Outdoor Plants & Garden Essentials",
   keywords: [
     "Susmita Nursery",
     "Indoor Plants",
