@@ -20,8 +20,57 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   title: "Susmita Nursery - Premium Plants & Gardening",
+  keywords: [
+    "Susmita Nursery",
+    "Indoor Plants",
+    "Air-Purifying Plants",
+    "Badkulla",
+  ],
   description:
-    "Discover beautiful indoor and outdoor plants, seeds, and gardening essentials. Experience our plants with AR visualization.",
+    "Cultivating green sanctuaries since 2015. Susmita Nursery merges expert horticultural practice with modern digital convenience, including interactive AR room-fitting tools. Discover resilient indoor plants, air-purifiers, succulents, and flowering specimens.",
+  metadataBase: new URL("https://www.susmitanursery.com/"),
+  alternates: {
+    canonical: "/",
+  },
+  icons: {
+    icon: [
+      { url: "/meta/favicon.ico" },
+      { url: "/meta/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/meta/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      {
+        url: "/meta/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
+  manifest: "/meta/site.webmanifest",
+  // openGraph: {
+  //   title: "Susmita Nursery - Premium Plants & Gardening",
+  //   description:
+  //     "Cultivating green sanctuaries since 2015. Susmita Nursery merges expert horticultural practice with modern digital convenience, including interactive AR room-fitting tools.",
+  //   url: "https://www.susmitanursery.com/",
+  //   siteName: "Susmita Nursery",
+  //   images: [
+  //     {
+  //       url: "/images/hero-garden.jpg",
+  //       width: 1200,
+  //       height: 630,
+  //       alt: "Susmita Nursery Greenhouse Farm",
+  //     },
+  //   ],
+  //   locale: "en_IN",
+  //   type: "website",
+  // },
+  // twitter: {
+  //   card: "summary_large_image",
+  //   title: "Susmita Nursery - Premium Plants & Gardening",
+  //   description:
+  //     "Cultivating green sanctuaries since 2015. Susmita Nursery merges expert horticultural practice with modern digital convenience.",
+  //   images: ["/images/hero-garden.jpg"],
+  // },
 };
 
 export default function RootLayout({
@@ -30,13 +79,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn(inter.variable, cormorant.variable, "font-sans scroll-smooth")}>
+    <html
+      lang="en"
+      className={cn(
+        inter.variable,
+        cormorant.variable,
+        "font-sans scroll-smooth",
+      )}
+    >
       <body className="antialiased bg-background text-foreground selection:bg-primary/20 selection:text-primary">
-        <ShopProvider>
-          {children}
-        </ShopProvider>
+        <ShopProvider>{children}</ShopProvider>
       </body>
     </html>
   );
 }
-
