@@ -24,7 +24,9 @@ export const metadata: Metadata = {
     "Susmita Nursery",
     "Indoor Plants",
     "Air-Purifying Plants",
+    "Gangni",
     "Badkulla",
+    "Nadia",
   ],
   description:
     "Cultivating green sanctuaries. Susmita Nursery merges expert horticultural practice with modern digital convenience, including interactive AR room-fitting tools. Discover resilient indoor plants, air-purifiers, succulents, and flowering specimens.",

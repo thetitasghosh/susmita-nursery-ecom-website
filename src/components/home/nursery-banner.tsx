@@ -62,7 +62,7 @@ export function NurseryBanner() {
                   <Clock className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-semibold text-white">Opening Timings</p>
-                    <p className="text-xs text-neutral-300">9:00 AM – 7:00 PM All Days</p>
+                    <p className="text-xs text-neutral-300">9:00 AM – 8:00 PM All Days</p>
                   </div>
                 </div>
 
@@ -70,7 +70,7 @@ export function NurseryBanner() {
                   <Phone className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-semibold text-white">Hotline Contact</p>
-                    <p className="text-xs text-neutral-300">099338 17580</p>
+                    <p className="text-xs text-neutral-300">8670329291</p>
                   </div>
                 </div>
 
@@ -79,8 +79,7 @@ export function NurseryBanner() {
                   <div>
                     <p className="font-semibold text-white">Location Coordinates</p>
                     <p className="text-xs text-neutral-300 leading-normal">
-                      Anjangarh Sitala Mandir, Badkulla,<br />
-                      Boalia, West Bengal 741121
+                      Gangni , Badkulla , Nadia , 741121 , W.B.
                     </p>
                   </div>
                 </div>
@@ -88,7 +87,7 @@ export function NurseryBanner() {
 
               <div className="pt-2">
                 <a
-                  href="https://maps.google.com/?q=Anjangarh+Sitala+Mandir+Badkulla+Boalia+West+Bengal+741121"
+                  href="https://maps.google.com/?q=Gangni+Badkulla+Nadia+West+Bengal+741121"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full block"

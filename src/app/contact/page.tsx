@@ -54,12 +54,12 @@ function ContactContent() {
     {
       image: '/images/plants/peace-lily.jpg',
       title: 'Our Head Office',
-      details: 'Anjangarh Sitala Mandir, Badkulla, Boalia, West Bengal 741121',
+      details: 'Gangni , Badkulla , Nadia , 741121 , W.B.',
     },
     {
       image: '/images/plants/pothos-hanging.jpg',
       title: 'Horticulture Helpline',
-      details: '099338 17580',
+      details: '8670329291',
     },
     {
       image: '/images/plants/lavender-plant.jpg',
@@ -69,22 +69,22 @@ function ContactContent() {
     {
       image: '/images/plants/succulent-collection.jpg',
       title: 'Visiting Hours',
-      details: 'Monday - Sunday: 8:00 AM - 7:00 PM (IST)',
+      details: 'Monday - Sunday: 9:00 AM - 8:00 PM (IST)',
     },
   ]
 
   const greenhouseLocations = [
     {
       branch: 'Main Retail Greenhouses',
-      address: 'Anjangarh Sitala Mandir, Badkulla, Boalia, West Bengal 741121',
-      phone: '099338 17580',
+      address: 'Gangni , Badkulla , Nadia , 741121 , W.B.',
+      phone: '8670329291',
       desc: 'Our flagship nursery displaying over 400 species of indoor/outdoor plants, potting soils, and custom fiber planters.',
       image: '/images/plants/monstera-plant.jpg',
     },
     {
       branch: 'Botanical Farm & Propagator',
-      address: 'Anjangarh Sitala Mandir, Badkulla, Boalia, West Bengal 741121',
-      phone: '099338 17580',
+      address: 'Gangni , Badkulla , Nadia , 741121 , W.B.',
+      phone: '8670329291',
       desc: 'Our 10-acre propagation facility where our rare specimens, succulents, and specialty hybrid orchids are raised by botanists.',
       image: '/images/plants/bonsai-tree.jpg',
     },

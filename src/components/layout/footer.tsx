@@ -159,7 +159,7 @@ export function Footer() {
                 />
                 <div>
                   <p className="font-medium text-white">Timings</p>
-                  <p>9:00 AM – 7:00 PM All Days</p>
+                  <p>9:00 AM – 8:00 PM All Days</p>
                 </div>
               </li>
               <li className="flex items-start gap-2.5">
@@ -170,8 +170,7 @@ export function Footer() {
                 <div>
                   <p className="font-medium text-white">Location Coordinates</p>
                   <p className="leading-tight">
-                    Anjangarh Sitala Mandir, Badkulla, Boalia, West Bengal
-                    741121
+                    Gangni , Badkulla , Nadia , 741121 , W.B.
                   </p>
                 </div>
               </li>
@@ -186,7 +185,7 @@ export function Footer() {
             <ul className="space-y-3.5 text-xs text-neutral-300 font-light">
               <li className="flex items-center gap-2.5">
                 <Phone size={14} className="text-accent" />
-                <span>099338 17580</span>
+                <span>8670329291</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail size={14} className="text-accent" />
