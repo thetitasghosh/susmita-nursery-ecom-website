@@ -4,8 +4,6 @@ import React, { useState, useEffect } from 'react'
 import { 
   Mail, 
   Search, 
-  X, 
-  Sparkles,
   Send,
   Eye,
   CheckCircle
