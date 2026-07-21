@@ -156,15 +156,17 @@ export default function CartPage() {
                   </div>
 
                   <div className="flex justify-between items-center mb-6">
-                    <span className="font-bold text-foreground">Order Total</span>
-                    <span className="text-2xl font-serif font-bold text-primary tabular-nums">
+                    <span className="font-bold text-foreground">Estimated Total</span>
+                    <span className="text-2xl font-sans font-bold text-primary tabular-nums">
                       ₹{total.toFixed(2)}
                     </span>
                   </div>
 
-                  <Button size="lg" className="w-full bg-primary-emerald hover:bg-primary-emerald/90 text-white rounded-full font-semibold cursor-pointer shadow-sm mb-3">
-                    Proceed to Checkout
-                  </Button>
+                  <Link href="/account">
+                    <Button size="lg" className="w-full bg-primary-emerald hover:bg-primary-emerald/90 text-white rounded-full font-semibold cursor-pointer shadow-sm mb-3">
+                      Reserve Plants for In-Store Pickup
+                    </Button>
+                  </Link>
 
                   <Link href="/products" className="block w-full">
                     <Button size="lg" variant="outline" className="w-full rounded-full border-border hover:bg-muted text-foreground cursor-pointer">
@@ -172,10 +174,11 @@ export default function CartPage() {
                     </Button>
                   </Link>
 
-                  {/* Note */}
-                  <div className="mt-6 p-4 bg-primary/5 border border-primary/10 rounded-2xl">
-                    <p className="text-[10px] text-neutral-600 leading-normal font-light">
-                      <span className="font-semibold text-foreground">Payment Notice:</span> This is a demonstration sandbox check. No credit/debit charges will be made.
+                  {/* Offline Store Pickup Notice */}
+                  <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200/80 rounded-2xl space-y-1">
+                    <p className="text-xs font-bold text-emerald-900">In-Store Offline Pickup Notice</p>
+                    <p className="text-[11px] text-emerald-800 leading-normal font-light">
+                      Susmita Nursery is an offline store. Submitting this reservation saves your plant selections to your account pass. When visiting our store, simply give your name or phone number to the nursery staff to pick up your plants!
                     </p>
                   </div>
                 </div>

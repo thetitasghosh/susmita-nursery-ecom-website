@@ -201,7 +201,9 @@ export function Navbar() {
 
               {/* User Profile */}
               <Link
-                href="/about"
+                href="/account"
+                title="My Account"
+                aria-label="User Account"
                 className="p-2.5 hover:bg-muted rounded-full transition-colors hidden sm:inline-flex"
               >
                 <User size={18} className="text-foreground" />
@@ -372,7 +374,23 @@ export function Navbar() {
                 {/* Divider */}
                 <div className="h-px bg-white/10 my-3" />
 
-                {/* Wishlist & Orders */}
+                {/* Account, Wishlist & Orders */}
+                <Link
+                  href="/account"
+                  onClick={closeMenu}
+                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <User
+                      size={16}
+                      className="text-white/60 group-hover:text-white transition-colors"
+                    />
+                    <span className="text-sm font-medium text-white font-sans">
+                      My Account
+                    </span>
+                  </div>
+                </Link>
+
                 <Link
                   href="/wishlist"
                   onClick={closeMenu}
