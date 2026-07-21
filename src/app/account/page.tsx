@@ -10,11 +10,9 @@ import { Button } from '@/components/ui/button'
 import { useShop } from '@/lib/shop-context'
 import {
   User,
-  Package,
   MapPin,
   Edit3,
   CheckCircle2,
-  Clock,
   Store,
   Copy,
   Plus,
@@ -28,10 +26,7 @@ import {
   Briefcase,
   ShieldCheck,
   QrCode,
-  Info,
-  Calendar,
-  Sparkles,
-  ExternalLink
+  Info
 } from 'lucide-react'
 
 // Default User Profile

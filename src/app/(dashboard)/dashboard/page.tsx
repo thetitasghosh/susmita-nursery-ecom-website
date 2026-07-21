@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Boxes,
   Clock,
-  Eye,
   Calendar
 } from 'lucide-react'
 

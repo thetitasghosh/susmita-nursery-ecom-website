@@ -7,13 +7,9 @@ import {
   Eye, 
   MapPin, 
   Phone, 
-  Mail, 
-  CreditCard,
-  Package,
-  ShoppingBag,
+  Mail,
   Store,
-  CheckCircle2,
-  Clock
+  CreditCard
 } from 'lucide-react'
 import {
   Table,
