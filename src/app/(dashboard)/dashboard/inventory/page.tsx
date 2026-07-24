@@ -76,22 +76,31 @@ export default function InventoryPage() {
 
   const loadInventory = useCallback(() => {
     const stored = localStorage.getItem('nursery_products')
+    let useDefault = true
     if (stored) {
       try {
         const decoded = JSON.parse(stored)
-        setItems(decoded.map((p: EnrichedProduct) => ({
-          id: p.id,
-          name: p.name,
-          scientificName: p.scientificName,
-          category: p.category,
-          image: p.image,
-          stock_quantity: p.stock_quantity !== undefined ? p.stock_quantity : (p.id === 1 ? 2 : p.id === 2 ? 4 : p.id === 6 ? 3 : p.id === 19 ? 0 : 15),
-          reserved_quantity: p.reserved_quantity !== undefined ? p.reserved_quantity : (p.id === 1 ? 1 : p.id === 2 ? 2 : 0)
-        })))
+        const hasOldCategories = decoded.some((p: any) => 
+          ['Bonsai', 'Palms', 'Succulents', 'Tools', 'Plant Medicine', 'Air Purifying', 'Flowering Plants'].includes(p.category)
+        )
+        if (!hasOldCategories && decoded.length >= 26) {
+          setItems(decoded.map((p: EnrichedProduct) => ({
+            id: p.id,
+            name: p.name,
+            scientificName: p.scientificName,
+            category: p.category,
+            image: p.image,
+            stock_quantity: p.stock_quantity !== undefined ? p.stock_quantity : (p.id === 1 ? 2 : p.id === 2 ? 4 : p.id === 6 ? 3 : p.id === 19 ? 0 : 15),
+            reserved_quantity: p.reserved_quantity !== undefined ? p.reserved_quantity : (p.id === 1 ? 1 : p.id === 2 ? 2 : 0)
+          })))
+          useDefault = false
+        }
       } catch {
-        fallbackInventory()
+        // Fallback
       }
-    } else {
+    }
+    
+    if (useDefault) {
       fallbackInventory()
     }
   }, [fallbackInventory])
@@ -126,8 +135,21 @@ export default function InventoryPage() {
     saveToProducts(updated)
   }
 
-  // Filters
-  const categories = ['All', 'Indoor Plants', 'Outdoor Plants', 'Flowering Plants', 'Palms', 'Succulents', 'Bonsai', 'Tools', 'Plant Medicine']
+  const categories = [
+    'All',
+    'Indoor Plants',
+    'Lucky Bamboo',
+    'No1. Fiber Pots',
+    'Ceramic Pots',
+    'No1. Clay Pots',
+    'Plastic Pots',
+    'Organic Fertilizer',
+    'Plants Medicine',
+    'Gardening Tools',
+    'Fruit Plants',
+    'Flower Plants',
+    'Outdoor Plants'
+  ]
 
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 

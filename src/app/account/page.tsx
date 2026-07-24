@@ -35,7 +35,7 @@ const DEFAULT_PROFILE = {
   email: 'ananya.sharma@example.com',
   phone: '+91 98301 23456',
   joinedDate: 'October 2024',
-  preferredCategory: 'Indoor & Air Purifying Plants',
+  preferredCategory: 'Indoor Plants',
   avatarUrl: ''
 }
 
@@ -637,10 +637,11 @@ export default function UserAccountPage() {
                             onChange={(e) => setEditForm({ ...editForm, preferredCategory: e.target.value })}
                             className="w-full bg-muted/40 border border-border px-3.5 py-2.5 rounded-xl text-xs font-medium focus:outline-none focus:border-primary"
                           >
-                            <option value="Indoor & Air Purifying Plants">Indoor & Air Purifying Plants</option>
-                            <option value="Outdoor & Fruit Trees">Outdoor & Fruit Trees</option>
-                            <option value="Succulents & Bonsai">Succulents & Bonsai</option>
-                            <option value="Flowering & Medicinal Plants">Flowering & Medicinal Plants</option>
+                            <option value="Indoor Plants">Indoor Plants</option>
+                            <option value="Outdoor Plants">Outdoor Plants</option>
+                            <option value="Flower Plants">Flower Plants</option>
+                            <option value="Fruit Plants">Fruit Plants</option>
+                            <option value="Lucky Bamboo">Lucky Bamboo</option>
                           </select>
                         </div>
                       </div>

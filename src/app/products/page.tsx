@@ -37,14 +37,17 @@ function ProductCatalog() {
 
   const categories = [
     'Indoor Plants',
-    'Outdoor Plants',
-    'Flowering Plants',
+    'Lucky Bamboo',
+    'No1. Fiber Pots',
+    'Ceramic Pots',
+    'No1. Clay Pots',
+    'Plastic Pots',
+    'Organic Fertilizer',
+    'Plants Medicine',
+    'Gardening Tools',
     'Fruit Plants',
-    'Palms',
-    'Succulents',
-    'Bonsai',
-    'Tools',
-    'Plant Medicine'
+    'Flower Plants',
+    'Outdoor Plants'
   ]
 
   const filteredProducts = allProducts.filter((product) => {

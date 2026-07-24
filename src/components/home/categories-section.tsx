@@ -9,18 +9,48 @@ import { ChevronLeft, ChevronRight, Leaf } from 'lucide-react'
 const categories = [
   {
     name: 'Indoor Plants',
-    image: '/images/plants/monstera-plant.jpg',
+    image: '/images/plants/monstera-plant.jpg?v=2',
     href: '/products?category=Indoor Plants',
   },
   {
-    name: 'Outdoor Plants',
-    image: '/images/plants/sunflower-garden.jpg',
-    href: '/products?category=Outdoor Plants',
+    name: 'Lucky Bamboo',
+    image: '/images/plants/lucky-bamboo.png?v=2',
+    href: '/products?category=Lucky Bamboo',
   },
   {
-    name: 'Flowering Plants',
-    image: '/images/plants/rose-flowers.jpg',
-    href: '/products?category=Flowering Plants',
+    name: 'No1. Fiber Pots',
+    image: '/images/plants/fiber-pots.png?v=2',
+    href: '/products?category=No1. Fiber Pots',
+  },
+  {
+    name: 'Ceramic Pots',
+    image: '/images/plants/ceramic-pots.png?v=2',
+    href: '/products?category=Ceramic Pots',
+  },
+  {
+    name: 'No1. Clay Pots',
+    image: '/images/plants/clay-pots.png?v=2',
+    href: '/products?category=No1. Clay Pots',
+  },
+  {
+    name: 'Plastic Pots',
+    image: '/images/plants/plastic-pots.png?v=2',
+    href: '/products?category=Plastic Pots',
+  },
+  {
+    name: 'Organic Fertilizer',
+    image: '/images/plants/organic-fertilizer.png?v=2',
+    href: '/products?category=Organic Fertilizer',
+  },
+  {
+    name: 'Plants Medicine',
+    image: '/images/plants/neem-oil.jpg',
+    href: '/products?category=Plants Medicine',
+  },
+  {
+    name: 'Gardening Tools',
+    image: '/images/plants/gardening-tools.png?v=2',
+    href: '/products?category=Gardening Tools',
   },
   {
     name: 'Fruit Plants',
@@ -28,29 +58,14 @@ const categories = [
     href: '/products?category=Fruit Plants',
   },
   {
-    name: 'Palms',
-    image: '/images/plants/areca-palm.jpg',
-    href: '/products?category=Palms',
+    name: 'Flower Plants',
+    image: '/images/plants/rose-flowers.jpg',
+    href: '/products?category=Flower Plants',
   },
   {
-    name: 'Succulents',
-    image: '/images/plants/succulent-collection.jpg',
-    href: '/products?category=Succulents',
-  },
-  {
-    name: 'Bonsai',
-    image: '/images/plants/bonsai-tree.jpg',
-    href: '/products?category=Bonsai',
-  },
-  {
-    name: 'Pots & Planters',
-    image: '/images/plants/pots-planters.jpg',
-    href: '/products?category=Pots & Planters',
-  },
-  {
-    name: 'Garden Accessories',
-    image: '/images/plants/garden-accessories.jpg',
-    href: '/products?category=Tools',
+    name: 'Outdoor Plants',
+    image: '/images/plants/sunflower-garden.jpg',
+    href: '/products?category=Outdoor Plants',
   },
 ]
 

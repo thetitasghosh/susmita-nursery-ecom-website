@@ -11,11 +11,17 @@ import { allProducts } from '@/lib/products'
 
 const categoryIdToName: Record<number, { name: string; description: string }> = {
   1: { name: 'Indoor Plants', description: 'Breathe life into your rooms and office spaces' },
-  2: { name: 'Flowers', description: 'Vibrant colors, delicate blooms, and sweet fragrance' },
-  3: { name: 'Specialty', description: 'Stately, trained bonsai and rare ornamental varieties' },
-  4: { name: 'Succulents', description: 'Hardy desert natives requiring minimal care' },
-  5: { name: 'Air Purifying', description: 'Natural air filters to clear indoor toxins' },
-  6: { name: 'Herbs', description: 'Aromatic herbs to enhance your culinary garden' },
+  2: { name: 'Lucky Bamboo', description: 'Elegant bamboo arrangements that bring positive energy' },
+  3: { name: 'No1. Fiber Pots', description: 'Ultra-durable and modern fiberglass containers' },
+  4: { name: 'Ceramic Pots', description: 'Exquisite handcrafted glazed ceramic planters' },
+  5: { name: 'No1. Clay Pots', description: 'Breathable traditional terracotta clay flower pots' },
+  6: { name: 'Plastic Pots', description: 'Intelligent self-watering plastic containers' },
+  7: { name: 'Organic Fertilizer', description: 'Rich bio-organic compost and soil nutrients' },
+  8: { name: 'Plants Medicine', description: 'Organic neem oil sprays and plant wellness solutions' },
+  9: { name: 'Gardening Tools', description: 'High-quality bypass pruning shears and sprayers' },
+  10: { name: 'Fruit Plants', description: 'High-yielding grafted local fruit trees' },
+  11: { name: 'Flower Plants', description: 'Fragrant roses, dahlias, and ornamental flowers' },
+  12: { name: 'Outdoor Plants', description: 'Beautiful landscaping sun-loving garden plants' },
 }
 
 export default function CategoryDetailPage({ params }: { params: { id: string } }) {

@@ -36,18 +36,16 @@ export function Navbar() {
   const plantCategories = [
     { name: "Indoor Plants", href: "/products?category=Indoor Plants" },
     { name: "Outdoor Plants", href: "/products?category=Outdoor Plants" },
-    { name: "Flowering Plants", href: "/products?category=Flowering Plants" },
+    { name: "Flower Plants", href: "/products?category=Flower Plants" },
     { name: "Fruit Plants", href: "/products?category=Fruit Plants" },
-    { name: "Palms", href: "/products?category=Palms" },
-    { name: "Succulents", href: "/products?category=Succulents" },
-    { name: "Bonsai", href: "/products?category=Bonsai" },
+    { name: "Lucky Bamboo", href: "/products?category=Lucky Bamboo" },
   ];
 
   const navLinks = [
-    { label: "Tools", href: "/products?category=Tools", icon: Wrench },
+    { label: "Tools", href: "/products?category=Gardening Tools", icon: Wrench },
     {
       label: "Plant Medicine",
-      href: "/products?category=Plant Medicine",
+      href: "/products?category=Plants Medicine",
       icon: FlaskConical,
     },
     { label: "About Us", href: "/about", icon: Info },

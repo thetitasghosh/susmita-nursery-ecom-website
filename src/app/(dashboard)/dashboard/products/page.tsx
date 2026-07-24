@@ -107,20 +107,30 @@ export default function ProductsPage() {
   // Load products from localStorage or standard list
   useEffect(() => {
     const stored = localStorage.getItem('nursery_products')
+    let useDefault = true
     if (stored) {
       try {
-        setProducts(JSON.parse(stored))
+        const parsed = JSON.parse(stored)
+        const hasOldCategories = parsed.some((p: any) => 
+          ['Bonsai', 'Palms', 'Succulents', 'Tools', 'Plant Medicine', 'Air Purifying', 'Flowering Plants'].includes(p.category)
+        )
+        if (!hasOldCategories && parsed.length >= 26) {
+          setProducts(parsed)
+          useDefault = false
+        }
       } catch {
-        setProducts(allProducts)
+        // Fallback
       }
-    } else {
+    }
+
+    if (useDefault) {
       const enriched: EnrichedProduct[] = allProducts.map(p => ({
         ...p,
         supportingImages: [
           '/images/plants/succulent-collection.jpg',
           '/images/plants/aglaonema-red.jpg'
         ],
-        nestedItemIds: p.category === 'Tools' || p.category === 'Plant Medicine' ? [] : [17, 19]
+        nestedItemIds: p.category === 'Gardening Tools' || p.category === 'Plants Medicine' || p.category === 'Organic Fertilizer' ? [] : [17, 19]
       }))
       setProducts(enriched)
       localStorage.setItem('nursery_products', JSON.stringify(enriched))
@@ -321,14 +331,17 @@ export default function ProductsPage() {
   const categories = [
     'All',
     'Indoor Plants',
-    'Outdoor Plants',
-    'Flowering Plants',
+    'Lucky Bamboo',
+    'No1. Fiber Pots',
+    'Ceramic Pots',
+    'No1. Clay Pots',
+    'Plastic Pots',
+    'Organic Fertilizer',
+    'Plants Medicine',
+    'Gardening Tools',
     'Fruit Plants',
-    'Palms',
-    'Succulents',
-    'Bonsai',
-    'Tools',
-    'Plant Medicine'
+    'Flower Plants',
+    'Outdoor Plants'
   ]
 
   const filteredProducts = products.filter(p => {
