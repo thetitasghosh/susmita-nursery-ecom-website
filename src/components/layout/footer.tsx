@@ -121,7 +121,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/products?category=Flowering Plants"
+                  href="/products?category=Flower Plants"
                   className="hover:text-white transition-colors"
                 >
                   Flowering Plants
@@ -129,18 +129,26 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/products?category=Succulents"
+                  href="/products?category=Lucky Bamboo"
                   className="hover:text-white transition-colors"
                 >
-                  Succulents & Cactus
+                  Lucky Bamboo
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/products?category=Bonsai"
+                  href="/products?category=Gardening Tools"
                   className="hover:text-white transition-colors"
                 >
-                  Bonsai Collection
+                  Gardening Tools
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/products?category=Plants Medicine"
+                  className="hover:text-white transition-colors"
+                >
+                  Plants Medicine
                 </Link>
               </li>
             </ul>
