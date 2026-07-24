@@ -302,102 +302,104 @@ export default function UserAccountPage() {
         </div>
 
         {/* Main Workspace */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             
             {/* Sidebar Tabs */}
-            <div className="lg:col-span-1 space-y-4">
-              <div className="bg-card border border-border/80 rounded-2xl p-2.5 shadow-sm space-y-1 sticky top-24">
-                <button
-                  onClick={() => setActiveTab('reservations')}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    activeTab === 'reservations'
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Store size={16} />
-                    In-Store Reservations
-                  </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                    activeTab === 'reservations' ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {MOCK_RESERVATIONS.length}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('addresses')}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    activeTab === 'addresses'
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <MapPin size={16} />
-                    Saved Addresses
-                  </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                    activeTab === 'addresses' ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {addresses.length}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('profile')}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    activeTab === 'profile'
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <User size={16} />
-                    Profile & Settings
-                  </span>
-                </button>
-
-                <div className="h-px bg-border my-2" />
-
-                <Link
-                  href="/wishlist"
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Heart size={16} className="text-red-500" />
-                    Saved Wishlist
-                  </span>
-                  {wishlist.length > 0 && (
-                    <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">
-                      {wishlist.length}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24 space-y-4">
+                <div className="bg-card border border-border/80 rounded-2xl p-2.5 shadow-sm space-y-1">
+                  <button
+                    onClick={() => setActiveTab('reservations')}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      activeTab === 'reservations'
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Store size={16} />
+                      In-Store Reservations
                     </span>
-                  )}
-                </Link>
-              </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      activeTab === 'reservations' ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {MOCK_RESERVATIONS.length}
+                    </span>
+                  </button>
 
-              {/* Digital In-Store Pickup Pass Card */}
-              <div className="bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100/50 border border-emerald-200 rounded-2xl p-4 space-y-3 text-xs shadow-sm">
-                <div className="flex items-center justify-between text-emerald-900 font-bold">
-                  <span className="flex items-center gap-1.5">
-                    <QrCode size={16} className="text-primary" />
-                    In-Store Pickup Pass
-                  </span>
-                  <span className="text-[10px] bg-emerald-200/60 text-emerald-900 px-2 py-0.5 rounded-full font-mono">
-                    ACTIVE
-                  </span>
+                  <button
+                    onClick={() => setActiveTab('addresses')}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      activeTab === 'addresses'
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <MapPin size={16} />
+                      Saved Addresses
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      activeTab === 'addresses' ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {addresses.length}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('profile')}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      activeTab === 'profile'
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <User size={16} />
+                      Profile & Settings
+                    </span>
+                  </button>
+
+                  <div className="h-px bg-border my-2" />
+
+                  <Link
+                    href="/wishlist"
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Heart size={16} className="text-red-500" />
+                      Saved Wishlist
+                    </span>
+                    {wishlist.length > 0 && (
+                      <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">
+                        {wishlist.length}
+                      </span>
+                    )}
+                  </Link>
                 </div>
-                <div className="bg-white/80 backdrop-blur-sm p-3 rounded-xl border border-emerald-200/60 space-y-1 font-mono text-[11px]">
-                  <p className="text-neutral-500 text-[10px] font-sans">Name:</p>
-                  <p className="font-bold text-neutral-800 font-sans">{profile.name}</p>
-                  <p className="text-neutral-500 text-[10px] font-sans pt-1">Phone:</p>
-                  <p className="font-bold text-primary font-sans">{profile.phone}</p>
+
+                {/* Digital In-Store Pickup Pass Card */}
+                <div className="bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100/50 border border-emerald-200 rounded-2xl p-4 space-y-3 text-xs shadow-sm">
+                  <div className="flex items-center justify-between text-emerald-900 font-bold">
+                    <span className="flex items-center gap-1.5">
+                      <QrCode size={16} className="text-primary" />
+                      In-Store Pickup Pass
+                    </span>
+                    <span className="text-[10px] bg-emerald-200/60 text-emerald-900 px-2 py-0.5 rounded-full font-mono">
+                      ACTIVE
+                    </span>
+                  </div>
+                  <div className="bg-white/80 backdrop-blur-sm p-3 rounded-xl border border-emerald-200/60 space-y-1 font-mono text-[11px]">
+                    <p className="text-neutral-500 text-[10px] font-sans">Name:</p>
+                    <p className="font-bold text-neutral-800 font-sans">{profile.name}</p>
+                    <p className="text-neutral-500 text-[10px] font-sans pt-1">Phone:</p>
+                    <p className="font-bold text-primary font-sans">{profile.phone}</p>
+                  </div>
+                  <p className="text-[10px] text-emerald-800 font-light leading-relaxed">
+                    Mention your name or phone when visiting Susmita Nursery store for quick plant checkout.
+                  </p>
                 </div>
-                <p className="text-[10px] text-emerald-800 font-light leading-relaxed">
-                  Mention your name or phone when visiting Susmita Nursery store for quick plant checkout.
-                </p>
               </div>
             </div>
 
@@ -410,7 +412,7 @@ export default function UserAccountPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="space-y-6"
+                  className="space-y-6 lg:pt-10"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -500,7 +502,7 @@ export default function UserAccountPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="space-y-6"
+                  className="space-y-6 lg:pt-10"
                 >
                   <div className="flex items-center justify-between">
                     <div>
