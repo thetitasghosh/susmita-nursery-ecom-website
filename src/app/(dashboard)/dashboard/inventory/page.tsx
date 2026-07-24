@@ -80,7 +80,7 @@ export default function InventoryPage() {
     if (stored) {
       try {
         const decoded = JSON.parse(stored)
-        const hasOldCategories = decoded.some((p: any) => 
+        const hasOldCategories = decoded.some((p: { category: string }) => 
           ['Bonsai', 'Palms', 'Succulents', 'Tools', 'Plant Medicine', 'Air Purifying', 'Flowering Plants'].includes(p.category)
         )
         if (!hasOldCategories && decoded.length >= 26) {

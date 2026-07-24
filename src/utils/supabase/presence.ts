@@ -18,7 +18,7 @@ export const initPresence = (
     onChange(onlineIds);
   });
 
-  channel.subscribe(async (status: any) => {
+  channel.subscribe(async (status: string) => {
     if (status === "SUBSCRIBED") {
       await channel.track({});
     }

@@ -111,7 +111,7 @@ export default function ProductsPage() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
-        const hasOldCategories = parsed.some((p: any) => 
+        const hasOldCategories = parsed.some((p: { category: string }) => 
           ['Bonsai', 'Palms', 'Succulents', 'Tools', 'Plant Medicine', 'Air Purifying', 'Flowering Plants'].includes(p.category)
         )
         if (!hasOldCategories && parsed.length >= 26) {
