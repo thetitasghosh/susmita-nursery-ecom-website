@@ -4,7 +4,7 @@ import { HeroSection } from "@/components/home/hero-section";
 import { CategoriesSection } from "@/components/home/categories-section";
 import { ValueProposition } from "@/components/home/value-proposition";
 import { FeaturedProducts } from "@/components/home/featured-products";
-import { ARShowcase } from "@/components/home/ar-showcase";
+// import { ARShowcase } from "@/components/home/ar-showcase";
 // import { TestimonialsSection } from "@/components/home/testimonials-section";
 import { GallerySection } from "@/components/home/gallery-section";
 import { NurseryBanner } from "@/components/home/nursery-banner";
@@ -18,7 +18,7 @@ export default function Home() {
         <CategoriesSection />
         <ValueProposition />
         <FeaturedProducts />
-        <ARShowcase />
+        {/* <ARShowcase /> */}
         {/* <TestimonialsSection /> */}
         <GallerySection />
         <NurseryBanner />

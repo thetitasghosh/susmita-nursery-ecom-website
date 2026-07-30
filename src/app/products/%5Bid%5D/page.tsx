@@ -32,6 +32,170 @@ export default function ProductDetailPage({
   const [quantity, setQuantity] = useState(1)
   const [selectedSize, setSelectedSize] = useState(product.sizes[0] || 'Standard')
   const [activeCareStage, setActiveCareStage] = useState(0)
+  const [isGeneratingGuide, setIsGeneratingGuide] = useState(false)
+
+  const handleDownloadCareGuide = () => {
+    setIsGeneratingGuide(true)
+    try {
+      const canvas = document.createElement('canvas')
+      canvas.width = 1200
+      canvas.height = 1600
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        setIsGeneratingGuide(false)
+        return
+      }
+
+      // Background Gradient
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height)
+      bgGrad.addColorStop(0, '#FAFAF9')
+      bgGrad.addColorStop(1, '#F0FDF4')
+      ctx.fillStyle = bgGrad
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Header Banner
+      ctx.fillStyle = '#064E3B'
+      ctx.fillRect(0, 0, canvas.width, 150)
+
+      ctx.fillStyle = '#FFFFFF'
+      ctx.font = 'bold 38px serif'
+      ctx.fillText('SUSMITA NURSERY', 80, 90)
+
+      ctx.font = '16px sans-serif'
+      ctx.fillStyle = '#A7F3D0'
+      ctx.fillText('Official Botanical Care Pass & Verification', canvas.width - 450, 90)
+
+      // Plant Title & Scientific Name
+      ctx.fillStyle = '#064E3B'
+      ctx.font = 'bold 50px serif'
+      ctx.fillText(product.name, 80, 240)
+
+      if (product.scientificName) {
+        ctx.font = 'italic 24px serif'
+        ctx.fillStyle = '#047857'
+        ctx.fillText(`(${product.scientificName})`, 80, 280)
+      }
+
+      // Product Specs Card Box
+      ctx.fillStyle = '#FFFFFF'
+      ctx.shadowColor = 'rgba(0,0,0,0.06)'
+      ctx.shadowBlur = 15
+      ctx.fillRect(80, 320, 1040, 220)
+      ctx.shadowBlur = 0
+
+      ctx.strokeStyle = '#D1E7DD'
+      ctx.lineWidth = 1.5
+      ctx.strokeRect(80, 320, 1040, 220)
+
+      const specItems = [
+        { label: 'LIGHT REQUIREMENT', val: product.details.light },
+        { label: 'WATERING NEEDS', val: product.details.water },
+        { label: 'HUMIDITY', val: product.details.humidity },
+        { label: 'TEMPERATURE', val: product.details.temperature },
+        { label: 'RECOMMENDED SOIL', val: product.details.soil },
+        { label: 'CARE LEVEL', val: product.difficulty || 'Easy' },
+      ]
+
+      specItems.forEach((item, index) => {
+        const col = index % 3
+        const row = Math.floor(index / 3)
+        const x = 120 + col * 340
+        const y = 375 + row * 85
+
+        ctx.fillStyle = '#059669'
+        ctx.font = 'bold 14px sans-serif'
+        ctx.fillText(item.label, x, y)
+
+        ctx.fillStyle = '#1F2937'
+        ctx.font = '19px sans-serif'
+        ctx.fillText(item.val || 'Standard', x, y + 28)
+      })
+
+      // 5-Stage Routine Section
+      ctx.fillStyle = '#064E3B'
+      ctx.font = 'bold 30px serif'
+      ctx.fillText('5-Stage Lifecycle Care System', 80, 610)
+
+      careStages.forEach((stage, idx) => {
+        const y = 675 + idx * 130
+
+        // Step Circle
+        ctx.beginPath()
+        ctx.arc(110, y, 22, 0, 2 * Math.PI)
+        ctx.fillStyle = '#064E3B'
+        ctx.fill()
+
+        ctx.fillStyle = '#FFFFFF'
+        ctx.font = 'bold 20px sans-serif'
+        ctx.fillText(stage.stage, 104, y + 7)
+
+        // Stage Title
+        ctx.fillStyle = '#064E3B'
+        ctx.font = 'bold 22px sans-serif'
+        ctx.fillText(stage.title.toUpperCase(), 155, y - 4)
+
+        // Stage Description
+        ctx.fillStyle = '#4B5563'
+        ctx.font = '17px sans-serif'
+        const shortDesc = stage.desc.length > 90 ? stage.desc.substring(0, 90) + '...' : stage.desc
+        ctx.fillText(shortDesc, 155, y + 25)
+      })
+
+      // Dynamic QR Code Generation
+      const pageUrl = typeof window !== 'undefined' ? window.location.href : `https://susmitanursery.com/products/${product.id}`
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pageUrl)}`
+      const qrImg = new window.Image()
+      qrImg.crossOrigin = 'Anonymous'
+      qrImg.src = qrUrl
+
+      const triggerDownload = () => {
+        const link = document.createElement('a')
+        link.download = `${product.name.toLowerCase().replace(/\s+/g, '-')}-care-guide.png`
+        link.href = canvas.toDataURL('image/png')
+        link.click()
+        setIsGeneratingGuide(false)
+      }
+
+      qrImg.onload = () => {
+        // Draw Footer Box
+        ctx.fillStyle = '#FFFFFF'
+        ctx.fillRect(80, 1340, 1040, 200)
+        ctx.strokeStyle = '#059669'
+        ctx.lineWidth = 2
+        ctx.strokeRect(80, 1340, 1040, 200)
+
+        // Draw QR Code
+        ctx.drawImage(qrImg, 110, 1360, 160, 160)
+
+        // QR Information
+        ctx.fillStyle = '#064E3B'
+        ctx.font = 'bold 24px serif'
+        ctx.fillText('Scan QR Code for Live Support & Plant Guarantee', 300, 1420)
+
+        ctx.fillStyle = '#4B5563'
+        ctx.font = '16px sans-serif'
+        ctx.fillText(`Specimen ID: #${product.id} • ${product.name} (${product.category})`, 300, 1460)
+        ctx.fillText(`Susmita Nursery Online Care Hub: ${pageUrl}`, 300, 1490)
+
+        triggerDownload()
+      }
+
+      qrImg.onerror = () => {
+        triggerDownload()
+      }
+    } catch (err) {
+      console.error(err)
+      setIsGeneratingGuide(false)
+    }
+  }
+
+  const [selectedImage, setSelectedImage] = useState<string>(product.image)
+  const galleryImages = product.images && product.images.length > 0 ? product.images : [product.image]
+
+  // Reset selected image when product changes
+  React.useEffect(() => {
+    setSelectedImage(product.image)
+  }, [product])
 
   const wishlisted = isWishlisted(product.id)
   const alias = cultivarAliases[product.id]
@@ -86,7 +250,7 @@ export default function ProductDetailPage({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
             
-            {/* Left Column: Product Image */}
+            {/* Left Column: Product Image Gallery */}
             <div className="lg:col-span-6 space-y-6">
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
@@ -95,7 +259,8 @@ export default function ProductDetailPage({
                 className="relative aspect-square w-full bg-white border border-border rounded-[36px] overflow-hidden shadow-md group"
               >
                 <Image
-                  src={product.image}
+                  key={selectedImage}
+                  src={selectedImage}
                   alt={product.name}
                   fill
                   sizes="(max-w-1024px) 100vw, 50vw"
@@ -107,17 +272,38 @@ export default function ProductDetailPage({
                 <span className="absolute top-6 left-6 inline-flex items-center gap-1 px-3 py-1 bg-primary/15 border border-primary/25 backdrop-blur-md text-primary font-bold text-xs rounded-full uppercase tracking-wider">
                   {product.category}
                 </span>
-
-                {/* AR Quick Link Badge if applicable */}
-                {['Indoor Plants', 'Palms', 'Air Purifying'].includes(product.category) && (
-                  <Link href="/ar-experience">
-                    <button className="absolute bottom-6 left-6 px-4 py-2.5 bg-background/90 backdrop-blur-md text-neutral-900 border border-border shadow-md rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-white transition-all cursor-pointer z-10">
-                      <Eye size={14} className="text-primary" />
-                      <span>Visualize in AR</span>
-                    </button>
-                  </Link>
-                )}
               </motion.div>
+
+              {/* Thumbnails Gallery - Amazon / Flipkart Style */}
+              {galleryImages.length > 1 && (
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 pt-1 scrollbar-none">
+                  {galleryImages.map((imgUrl, idx) => {
+                    const isSelected = selectedImage === imgUrl
+                    const labels = ['Cover', 'Dimension', 'Features', 'Lifestyle']
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedImage(imgUrl)}
+                        className={`relative flex-shrink-0 w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all cursor-pointer group/thumb ${
+                          isSelected
+                            ? 'border-primary shadow-lg ring-2 ring-primary/40 scale-105'
+                            : 'border-border opacity-70 hover:opacity-100 hover:border-primary/50'
+                        }`}
+                      >
+                        <Image
+                          src={imgUrl}
+                          alt={`${product.name} view ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-[2px] py-0.5 text-[9px] font-semibold text-white text-center capitalize">
+                          {labels[idx] || `View ${idx + 1}`}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Right Column: Details & Specs */}
@@ -304,13 +490,16 @@ export default function ProductDetailPage({
                 </h2>
               </div>
               
-              {/* PDF download button */}
-              <Link href="/images/inspo/susmita-nursery-brand-design-canvas.png" target="_blank">
-                <Button variant="outline" className="border-primary text-primary hover:bg-primary/5 rounded-full px-6 flex items-center gap-2 cursor-pointer text-xs font-semibold">
-                  <Download size={13} />
-                  <span>Download Care Guide</span>
-                </Button>
-              </Link>
+              {/* Dynamic PDF / PNG Care Guide & QR Card Generator button */}
+              <Button 
+                onClick={handleDownloadCareGuide}
+                disabled={isGeneratingGuide}
+                variant="outline" 
+                className="border-primary text-primary hover:bg-primary/5 rounded-full px-6 flex items-center gap-2 cursor-pointer text-xs font-semibold"
+              >
+                <Download size={13} className={isGeneratingGuide ? "animate-bounce" : ""} />
+                <span>{isGeneratingGuide ? "Generating Guide..." : "Download Care Guide"}</span>
+              </Button>
             </div>
 
             {/* Lifecycle Stages Navigator */}

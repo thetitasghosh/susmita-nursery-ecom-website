@@ -8,8 +8,8 @@ import { allProducts, Product } from '@/lib/products'
 import { Leaf } from 'lucide-react'
 
 export function FeaturedProducts() {
-  // Best Sellers Deck: Monstera Deliciosa (1), Areca Palm (13), Ficus Lyrata (14), Peace Lily (2), Aglaonema Red (15)
-  const featuredIds = [1, 13, 14, 2, 15]
+  // Top 5 Featured Plant Deck: Money Plant Yellow Slabs (1), Green Good Luck Plant (2), Philodendron Birkin (3), Shingonium Yammy Red (4), Lipstick Plant (5)
+  const featuredIds = [1, 2, 3, 4, 5]
   
   const featured = featuredIds
     .map(id => allProducts.find(p => p.id === id))
