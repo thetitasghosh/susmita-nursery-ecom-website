@@ -4,12 +4,11 @@ import React, { useState } from 'react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
-import { Star, Heart, ShoppingCart, ShieldCheck, HeartHandshake, Truck, Eye, BookOpen, Download } from 'lucide-react'
+import { Star, Heart, ShoppingCart, ShieldCheck, HeartHandshake, Truck, BookOpen, Download } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { allProducts } from '@/lib/products'
 import { useShop } from '@/lib/shop-context'
 import Image from 'next/image'
-import Link from 'next/link'
 
 const cultivarAliases: Record<number, string> = {
   1: 'Swiss Cheese Plant',
