@@ -60,13 +60,13 @@ export function ProductCard({ product }: ProductCardProps) {
               {product.name}
             </h3>
             {product.scientificName && (
-              <p className="text-[11px] text-muted-foreground italic font-serif leading-none -mt-0.5 pb-1">
+              <p className="text-[11px] text-muted-foreground italic font-serif leading-none -mt-0.5 pb-1 line-clamp-1">
                 {product.scientificName}
               </p>
             )}
             
             {/* Rating */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 pt-0.5">
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
@@ -86,7 +86,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
 
-          {/* Footer details: Price and Action */}
+          {/* Footer details: Price on Left, Add to Cart on Right */}
           <div className="flex items-center justify-between pt-1">
             <span className="font-sans font-bold text-primary text-lg tabular-nums">
               ₹{product.price.toFixed(2)}
