@@ -22,7 +22,7 @@ export function NurseryBanner() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
+
           {/* Left Side: Content */}
           <div className="lg:col-span-7 space-y-6">
             <motion.div
@@ -87,7 +87,7 @@ export function NurseryBanner() {
 
               <div className="pt-2">
                 <a
-                  href="https://maps.google.com/?q=Gangni+Badkulla+Nadia+West+Bengal+741121"
+                  href="https://maps.app.goo.gl/vz4CG5oWScoEWVs5A?g_st=ic"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full block"
