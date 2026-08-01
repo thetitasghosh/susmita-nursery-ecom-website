@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { 
   TrendingUp, 
@@ -14,9 +14,12 @@ import {
   Clock,
   Calendar
 } from 'lucide-react'
+import { getProductsAction } from '@/server/product'
+import { getOrdersAction } from '@/server/order'
+import { getUsersAction } from '@/server/user'
 
-// Dummy data for Overview Stats
-const stats = [
+// Initial fallback values for Overview Stats
+const initialStats = [
   {
     title: 'Total Revenue',
     value: '₹48,250.00',
@@ -55,14 +58,14 @@ const stats = [
   },
 ]
 
-const recentOrders = [
+const initialRecentOrders = [
   { id: '#4092', name: 'Ananya Mitra', date: 'Jul 17, 2026', amount: '₹1,250.00', status: 'paid', statusColor: 'text-secondary bg-secondary/15 border-secondary/30' },
   { id: '#4091', name: 'Rohit Sharma', date: 'Jul 16, 2026', amount: '₹850.00', status: 'pending', statusColor: 'text-accent-earth bg-accent/15 border-accent/30' },
   { id: '#4090', name: 'Sanjana Sen', date: 'Jul 15, 2026', amount: '₹2,499.00', status: 'paid', statusColor: 'text-secondary bg-secondary/15 border-secondary/30' },
   { id: '#4089', name: 'Arjun Das', date: 'Jul 14, 2026', amount: '₹399.00', status: 'failed', statusColor: 'text-red-600 bg-red-50 border-red-200' },
 ]
 
-const lowStockItems = [
+const initialLowStockItems = [
   { name: 'Monstera Deliciosa', stock: 2, image: '/images/plants/monstera-plant.jpg', status: 'Critical' },
   { name: 'Peace Lily', stock: 4, image: '/images/plants/peace-lily.jpg', status: 'Warning' },
   { name: 'Lavender Plant', stock: 3, image: '/images/plants/lavender-plant.jpg', status: 'Warning' },
@@ -92,7 +95,86 @@ const weeklyChartData = [
 
 export default function OverviewPage() {
   const [timeframe, setTimeframe] = useState<'monthly' | 'weekly'>('monthly')
-  const [activePointIndex, setActivePointIndex] = useState<number | null>(6) // Default to latest data index
+  const [activePointIndex, setActivePointIndex] = useState<number | null>(6)
+
+  const [stats, setStats] = useState(initialStats)
+  const [recentOrders, setRecentOrders] = useState(initialRecentOrders)
+  const [lowStockItems, setLowStockItems] = useState(initialLowStockItems)
+
+  useEffect(() => {
+    async function loadDashboardMetrics() {
+      try {
+        const [prodRes, ordRes, userRes] = await Promise.all([
+          getProductsAction(),
+          getOrdersAction(),
+          getUsersAction()
+        ])
+
+        if (prodRes.success && prodRes.data && Array.isArray(prodRes.data) && prodRes.data.length > 0) {
+          const prods = prodRes.data as Array<Record<string, unknown>>
+          const lowStock = prods.filter((p) => ((p.stock_quantity as number) !== undefined ? (p.stock_quantity as number) : 10) <= 5)
+          
+          if (lowStock.length > 0) {
+            setLowStockItems(lowStock.map((p) => {
+              const stock = (p.stock_quantity as number) || 0
+              return {
+                name: (p.name as string) || 'Plant Specimen',
+                stock,
+                image: (p.image as string) || '/images/plants/monstera-plant.jpg',
+                status: stock === 0 ? 'Out of Stock' : stock <= 2 ? 'Critical' : 'Warning'
+              }
+            }))
+          }
+
+          setStats(prev => prev.map(s => {
+            if (s.title === 'Low Stock Items') {
+              return { ...s, value: `${lowStock.length} Products` }
+            }
+            return s
+          }))
+        }
+
+        if (ordRes.success && ordRes.data && Array.isArray(ordRes.data) && ordRes.data.length > 0) {
+          const orders = ordRes.data as Array<Record<string, unknown>>
+          const activeCount = orders.filter((o) => o.order_status === 'processing' || o.order_status === 'ready_for_pickup').length
+          const totalRev = orders.reduce((acc: number, o) => acc + Number(o.amount || 0), 0)
+
+          setStats(prev => prev.map(s => {
+            if (s.title === 'Total Revenue') {
+              return { ...s, value: `₹${totalRev.toLocaleString('en-IN')}` }
+            }
+            if (s.title === 'Active Orders') {
+              return { ...s, value: `${activeCount} Orders` }
+            }
+            return s
+          }))
+
+          setRecentOrders(orders.slice(0, 4).map((o) => ({
+            id: `#${(o.id as string | number).toString().slice(-4)}`,
+            name: (o.customer_name as string) || 'Customer',
+            date: o.created_at ? new Date(o.created_at as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Jul 17, 2026',
+            amount: `₹${Number(o.amount || 0).toFixed(2)}`,
+            status: o.payment_status === 'paid' ? 'paid' : o.order_status === 'cancelled' ? 'failed' : 'pending',
+            statusColor: o.payment_status === 'paid' ? 'text-secondary bg-secondary/15 border-secondary/30' : o.order_status === 'cancelled' ? 'text-red-600 bg-red-50 border-red-200' : 'text-accent-earth bg-accent/15 border-accent/30'
+          })))
+        }
+
+        if (userRes.success && userRes.data && Array.isArray(userRes.data) && userRes.data.length > 0) {
+          const userCount = userRes.data.length
+          setStats(prev => prev.map(s => {
+            if (s.title === 'Subscribers') {
+              return { ...s, value: `${userCount} Users` }
+            }
+            return s
+          }))
+        }
+      } catch {
+        // Keep initial fallback
+      }
+    }
+
+    loadDashboardMetrics()
+  }, [])
 
   const currentChartData = timeframe === 'monthly' ? monthlyChartData : weeklyChartData
   const activePoint = activePointIndex !== null ? currentChartData[activePointIndex] : null

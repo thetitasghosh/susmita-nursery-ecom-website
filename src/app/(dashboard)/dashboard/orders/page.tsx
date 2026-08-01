@@ -30,6 +30,8 @@ import {
 } from '@/components/ui/sheet'
 import { useSearchParams } from 'next/navigation'
 
+import { getOrdersAction, updateOrderStatusAction } from '@/server/order'
+
 interface OrderItem {
   id: number
   name: string
@@ -49,6 +51,31 @@ interface Order {
   orderStatus: 'processing' | 'ready_for_pickup' | 'fulfilled' | 'shipped' | 'delivered' | 'cancelled'
   address: string
   items: OrderItem[]
+}
+
+function formatDbOrder(o: Record<string, unknown>): Order {
+  const orderItems = Array.isArray(o.order_items) ? o.order_items : []
+  return {
+    id: (o.id as string) || 'SN-RES-00000',
+    customerName: (o.customer_name as string) || 'Customer',
+    email: (o.email as string) || 'N/A',
+    phone: (o.phone as string) || 'N/A',
+    date: o.created_at ? new Date(o.created_at as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Jul 19, 2026',
+    amount: Number(o.amount || 0),
+    paymentStatus: (o.payment_status as Order['paymentStatus']) || 'pending',
+    orderStatus: (o.order_status as Order['orderStatus']) || 'processing',
+    address: (o.address as string) || 'In-Store Pickup, Susmita Nursery',
+    items: orderItems.map((item: Record<string, unknown>) => {
+      const product = item.products as Record<string, unknown> | undefined
+      return {
+        id: (item.id as number) || (item.product_id as number) || 1,
+        name: (product?.name as string) || 'Plant Specimen',
+        price: Number(item.price || 0),
+        quantity: (item.quantity as number) || 1,
+        image: (product?.image as string) || '/images/plants/monstera-plant.jpg',
+      }
+    })
+  }
 }
 
 const initialOrders: Order[] = [
@@ -156,19 +183,33 @@ export default function OrdersPage() {
     }
   }, [urlSearch])
 
-  // Load from localStorage
-  useEffect(() => {
+  // Load from Supabase DB or localStorage fallback
+  const loadOrders = async () => {
+    try {
+      const res = await getOrdersAction()
+      if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        const formatted = (res.data as Array<Record<string, unknown>>).map(formatDbOrder)
+        setOrders(formatted)
+        return
+      }
+    } catch {
+      // Fallback
+    }
+
     const stored = localStorage.getItem('nursery_orders')
     if (stored) {
       try {
         setOrders(JSON.parse(stored))
+        return
       } catch {
-        setOrders(initialOrders)
+        // Fallback
       }
-    } else {
-      setOrders(initialOrders)
-      localStorage.setItem('nursery_orders', JSON.stringify(initialOrders))
     }
+    setOrders(initialOrders)
+  }
+
+  useEffect(() => {
+    loadOrders()
   }, [])
 
   // Open details sheet
@@ -178,11 +219,15 @@ export default function OrdersPage() {
   }
 
   // Update statuses from Sheet
-  const handleUpdateStatus = (field: 'paymentStatus' | 'orderStatus', val: string) => {
+  const handleUpdateStatus = async (field: 'paymentStatus' | 'orderStatus', val: string) => {
     if (!selectedOrder) return
 
     const updatedOrder = { ...selectedOrder, [field]: val } as Order
     setSelectedOrder(updatedOrder)
+
+    if (field === 'orderStatus') {
+      await updateOrderStatusAction(selectedOrder.id, val as 'processing' | 'ready_for_pickup' | 'fulfilled' | 'cancelled')
+    }
 
     const updatedOrders = orders.map(o => o.id === selectedOrder.id ? updatedOrder : o)
     setOrders(updatedOrders)

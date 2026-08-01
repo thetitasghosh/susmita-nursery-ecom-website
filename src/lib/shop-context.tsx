@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Product } from './products'
+import { getAccountAction, signoutAction } from '@/server/auth'
 
 export interface CartItem {
   product: Product
@@ -29,6 +30,16 @@ interface ShopContextType {
   removeToast: (id: string) => void
   cartCount: number
   cartSubtotal: number
+  
+  // Auth additions
+  user: Record<string, unknown> | null
+  profile: Record<string, unknown> | null
+  isLoadingUser: boolean
+  isLoginModalOpen: boolean
+  openLoginModal: () => void
+  closeLoginModal: () => void
+  logoutUser: () => Promise<void>
+  refreshSession: () => Promise<void>
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined)
@@ -39,7 +50,31 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastMessage[]>([])
   const [isMounted, setIsMounted] = useState(false)
 
-  // Load cart and wishlist from localStorage on mount (hydration safe)
+  // Auth States
+  const [user, setUser] = useState<Record<string, unknown> | null>(null)
+  const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
+  const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+
+  const refreshSession = async () => {
+    setIsLoadingUser(true)
+    try {
+      const res = await getAccountAction()
+      if (res.success && res.user) {
+        setUser(res.user)
+        setProfile(res.profile || null)
+      } else {
+        setUser(null)
+        setProfile(null)
+      }
+    } catch (e) {
+      console.error('Failed to restore user session', e)
+    } finally {
+      setIsLoadingUser(false)
+    }
+  }
+
+  // Load cart, wishlist, and session on mount (hydration safe)
   useEffect(() => {
     setIsMounted(true)
     const storedCart = localStorage.getItem('susmita_nursery_cart')
@@ -59,6 +94,8 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to parse wishlist data', e)
       }
     }
+
+    refreshSession()
   }, [])
 
   // Save cart to localStorage
@@ -157,6 +194,20 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0)
   const cartSubtotal = cart.reduce((total, item) => total + item.product.price * item.quantity, 0)
 
+  const openLoginModal = () => setIsLoginModalOpen(true)
+  const closeLoginModal = () => setIsLoginModalOpen(false)
+
+  const logoutUser = async () => {
+    try {
+      await signoutAction()
+      setUser(null)
+      setProfile(null)
+      addToast('Logged out successfully.', 'info')
+    } catch {
+      addToast('Failed to log out.', 'error')
+    }
+  }
+
   return (
     <ShopContext.Provider
       value={{
@@ -173,6 +224,14 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         removeToast,
         cartCount,
         cartSubtotal,
+        user,
+        profile,
+        isLoadingUser,
+        isLoginModalOpen,
+        openLoginModal,
+        closeLoginModal,
+        logoutUser,
+        refreshSession,
       }}
     >
       {children}

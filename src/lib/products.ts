@@ -9,6 +9,7 @@ export interface ProductCare {
 export interface Product {
   id: number
   name: string
+  slug?: string
   category: string
   price: number // Numeric for sorting and math calculations (INR Rupees)
   rating: number

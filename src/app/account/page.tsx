@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -8,6 +8,9 @@ import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { useShop } from '@/lib/shop-context'
+import { customerLoginAction, customerSignupAction } from '@/server/auth'
+import { getAddressesAction, saveAddressAction, deleteAddressAction, updateUserProfileAction } from '@/server/user'
+import { getOrdersAction } from '@/server/order'
 import {
   User,
   MapPin,
@@ -26,8 +29,14 @@ import {
   Briefcase,
   ShieldCheck,
   QrCode,
-  Info
+  Info,
+  AlertCircle,
+  CheckCircle,
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react'
+
 
 // Default User Profile
 const DEFAULT_PROFILE = {
@@ -39,31 +48,17 @@ const DEFAULT_PROFILE = {
   avatarUrl: ''
 }
 
-// Initial Saved Addresses / Locations
-const INITIAL_ADDRESSES = [
-  {
-    id: 'addr-1',
-    label: 'Home',
-    isDefault: true,
-    fullName: 'Ananya Sharma',
-    street: '42 Palm Grove Avenue, Flat 4B, Salt Lake Sector V',
-    city: 'Kolkata',
-    state: 'West Bengal',
-    pincode: '700091',
-    phone: '+91 98301 23456'
-  },
-  {
-    id: 'addr-2',
-    label: 'Work',
-    isDefault: false,
-    fullName: 'Ananya Sharma (Green Studio)',
-    street: '12B Eco Park Road, Tech Tower 3rd Floor, New Town',
-    city: 'Kolkata',
-    state: 'West Bengal',
-    pincode: '700156',
-    phone: '+91 98301 98765'
-  }
-]
+interface AddressItem {
+  id: string
+  label: string
+  isDefault: boolean
+  fullName: string
+  street: string
+  city: string
+  state: string
+  pincode: string
+  phone: string
+}
 
 interface ReservationItem {
   id: number
@@ -84,63 +79,8 @@ interface PlantReservation {
   notes?: string
 }
 
-// Mock Reservations tailored to Susmita Nursery Offline Store Workflow
-const MOCK_RESERVATIONS: PlantReservation[] = [
-  {
-    id: 'SN-RES-84920',
-    date: 'July 19, 2026',
-    status: 'Ready for Pickup',
-    storeLocation: 'Susmita Nursery Store, Gangni, Badkulla, Nadia, 741121, W.B.',
-    storeHours: '9:00 AM – 8:00 PM (Mon – Sun)',
-    notes: 'Requested terracotta ceramic pots for both specimens.',
-    items: [
-      {
-        id: 1,
-        name: 'Monstera Deliciosa',
-        size: 'Medium (10-12 inch)',
-        qty: 1,
-        price: 1250,
-        image: '/images/plants/monstera-plant.jpg'
-      },
-      {
-        id: 2,
-        name: 'Peace Lily',
-        size: 'Medium (8-10 inch)',
-        qty: 1,
-        price: 850,
-        image: '/images/plants/peace-lily.jpg'
-      }
-    ]
-  },
-  {
-    id: 'SN-RES-77123',
-    date: 'June 28, 2026',
-    status: 'Fulfilled In-Store',
-    storeLocation: 'Susmita Nursery Store, Gangni, Badkulla, Nadia, 741121, W.B.',
-    storeHours: '9:00 AM – 8:00 PM (Mon – Sun)',
-    items: [
-      {
-        id: 3,
-        name: 'Pothos Hanging',
-        size: 'Small basket (6 inch)',
-        qty: 1,
-        price: 399,
-        image: '/images/plants/pothos-hanging.jpg'
-      },
-      {
-        id: 4,
-        name: 'Succulent Collection',
-        size: 'Set of 3 (2 inch pots)',
-        qty: 1,
-        price: 299,
-        image: '/images/plants/succulent-collection.jpg'
-      }
-    ]
-  }
-]
-
 export default function UserAccountPage() {
-  const { addToast, wishlist } = useShop()
+  const { user, profile: authProfile, isLoadingUser, logoutUser, addToast, wishlist, refreshSession } = useShop()
   const [activeTab, setActiveTab] = useState<'reservations' | 'addresses' | 'profile'>('reservations')
   
   // Profile State
@@ -149,7 +89,8 @@ export default function UserAccountPage() {
   const [editForm, setEditForm] = useState(DEFAULT_PROFILE)
 
   // Address State
-  const [addresses, setAddresses] = useState(INITIAL_ADDRESSES)
+  const [addresses, setAddresses] = useState<AddressItem[]>([])
+  const [reservations, setReservations] = useState<PlantReservation[]>([])
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [newAddr, setNewAddr] = useState({
     label: 'Home',
@@ -164,78 +105,268 @@ export default function UserAccountPage() {
   // Selected Reservation Details Modal State
   const [activeReservationModal, setActiveReservationModal] = useState<PlantReservation | null>(null)
 
-  // Load saved data from localStorage
+  // Sync Supabase session profile data with client state
   useEffect(() => {
-    try {
-      const savedProfile = localStorage.getItem('susmita_user_profile')
-      if (savedProfile) {
-        const parsed = JSON.parse(savedProfile)
-        setProfile(parsed)
-        setEditForm(parsed)
+    if (user) {
+      const name = (authProfile?.full_name as string) || ((user?.email as string)?.split('@')[0]) || 'Nursery Client'
+      const email = (user?.email as string) || ''
+      const phone = (authProfile?.phone as string) || ''
+      const joinedDate = user?.created_at ? new Date(user.created_at as string).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'October 2024'
+      
+      const newProf = {
+        name,
+        email,
+        phone,
+        joinedDate,
+        preferredCategory: 'Indoor Plants',
+        avatarUrl: ''
       }
-      const savedAddrs = localStorage.getItem('susmita_user_addresses')
-      if (savedAddrs) {
-        setAddresses(JSON.parse(savedAddrs))
+      setProfile(newProf)
+      setEditForm(newProf)
+    }
+  }, [user, authProfile])
+
+  const loadUserData = useCallback(async () => {
+    if (!user) return
+    
+    // 1. Load Addresses
+    try {
+      const addrRes = await getAddressesAction()
+      if (addrRes.success && addrRes.data) {
+        const rawAddresses = addrRes.data as Array<{
+          id: string
+          label: string
+          is_default: boolean
+          full_name: string
+          street: string
+          city: string
+          state: string
+          pincode: string
+          phone: string
+        }>
+        const mapped = rawAddresses.map(a => ({
+          id: a.id,
+          label: a.label,
+          isDefault: a.is_default,
+          fullName: a.full_name,
+          street: a.street,
+          city: a.city,
+          state: a.state,
+          pincode: a.pincode,
+          phone: a.phone
+        }))
+        setAddresses(mapped)
+      } else {
+        setAddresses([])
       }
     } catch (e) {
-      console.error('Failed to load user state from localStorage', e)
+      console.error('Failed to load user addresses', e)
     }
-  }, [])
+
+    // 2. Load Reservations (Orders)
+    try {
+      const orderRes = await getOrdersAction()
+      if (orderRes.success && orderRes.data) {
+        const rawOrders = orderRes.data as Array<{
+          id: string
+          created_at: string
+          order_status: string
+          address?: string
+          notes?: string
+          order_items: Array<{
+            id: string
+            product_id: number
+            quantity: number
+            price: number | string
+            size: string
+            products?: {
+              name: string
+              image: string
+            }
+          }>
+        }>
+        const mappedReservations = rawOrders.map((ord) => ({
+          id: ord.id,
+          date: new Date(ord.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+          status: (ord.order_status === 'processing' 
+            ? 'Preparing Plants' 
+            : ord.order_status === 'ready_for_pickup' 
+            ? 'Ready for Pickup' 
+            : 'Fulfilled In-Store') as 'Ready for Pickup' | 'Preparing Plants' | 'Fulfilled In-Store',
+          storeLocation: ord.address || 'Susmita Nursery Store, Gangni, Badkulla, Nadia, 741121, W.B.',
+          storeHours: '9:00 AM – 8:00 PM (Mon – Sun)',
+          notes: ord.notes || '',
+          items: ord.order_items.map((item, idx) => ({
+            id: idx + 1,
+            name: item.products?.name || 'Plant specimen',
+            size: item.size || 'Medium',
+            qty: item.quantity,
+            price: Number(item.price),
+            image: item.products?.image || '/images/plants/monstera-plant.jpg'
+          }))
+        }))
+        setReservations(mappedReservations)
+      } else {
+        setReservations([])
+      }
+    } catch (e) {
+      console.error('Failed to load reservations', e)
+    }
+  }, [user])
+
+  // Load database data when session is available
+  useEffect(() => {
+    if (user) {
+      loadUserData()
+    } else {
+      setAddresses([])
+      setReservations([])
+    }
+  }, [user, loadUserData])
 
   // Save Profile Handler
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
-    setProfile(editForm)
-    localStorage.setItem('susmita_user_profile', JSON.stringify(editForm))
-    setIsEditingProfile(false)
-    addToast('Profile information updated!', 'success')
+    if (!user) return
+
+    try {
+      const res = await updateUserProfileAction(user.id as string, {
+        full_name: editForm.name,
+        phone: editForm.phone
+      })
+
+      if (res.success) {
+        setProfile(editForm)
+        localStorage.setItem('susmita_user_profile', JSON.stringify(editForm))
+        setIsEditingProfile(false)
+        addToast('Profile information updated!', 'success')
+        await refreshSession()
+      } else {
+        addToast(res.error || 'Failed to update profile in database.', 'error')
+      }
+    } catch {
+      addToast('Error saving profile changes.', 'error')
+    }
   }
 
   // Add Address Handler
-  const handleAddAddress = (e: React.FormEvent) => {
+  const handleAddAddress = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newAddr.fullName || !newAddr.street || !newAddr.city || !newAddr.pincode) {
       addToast('Please complete all required fields.', 'error')
       return
     }
 
-    const created = {
-      id: `addr-${Date.now()}`,
-      isDefault: addresses.length === 0,
-      ...newAddr
-    }
+    try {
+      const res = await saveAddressAction({
+        label: newAddr.label,
+        is_default: addresses.length === 0,
+        full_name: newAddr.fullName,
+        street: newAddr.street,
+        city: newAddr.city,
+        state: newAddr.state,
+        pincode: newAddr.pincode,
+        phone: newAddr.phone
+      })
 
-    const updated = [...addresses, created]
-    setAddresses(updated)
-    localStorage.setItem('susmita_user_addresses', JSON.stringify(updated))
-    setShowAddressModal(false)
-    setNewAddr({ label: 'Home', fullName: '', street: '', city: '', state: 'West Bengal', pincode: '', phone: '' })
-    addToast('New location saved!', 'success')
+      if (res.success) {
+        addToast('New location saved!', 'success')
+        loadUserData()
+        setShowAddressModal(false)
+        setNewAddr({ label: 'Home', fullName: '', street: '', city: '', state: 'West Bengal', pincode: '', phone: '' })
+      } else {
+        addToast(res.error || 'Failed to save address.', 'error')
+      }
+    } catch {
+      addToast('Error saving address.', 'error')
+    }
   }
 
   // Delete Address
-  const handleDeleteAddress = (id: string) => {
-    const updated = addresses.filter(a => a.id !== id)
-    setAddresses(updated)
-    localStorage.setItem('susmita_user_addresses', JSON.stringify(updated))
-    addToast('Address removed.', 'info')
+  const handleDeleteAddress = async (id: string) => {
+    try {
+      const res = await deleteAddressAction(id)
+      if (res.success) {
+        addToast('Address removed.', 'info')
+        loadUserData()
+      } else {
+        addToast(res.error || 'Failed to remove address.', 'error')
+      }
+    } catch {
+      addToast('Error removing address.', 'error')
+    }
   }
 
   // Set Default Address
-  const handleSetDefaultAddress = (id: string) => {
-    const updated = addresses.map(a => ({
-      ...a,
-      isDefault: a.id === id
-    }))
-    setAddresses(updated)
-    localStorage.setItem('susmita_user_addresses', JSON.stringify(updated))
-    addToast('Default address updated.', 'success')
+  const handleSetDefaultAddress = async (id: string) => {
+    const addrToUpdate = addresses.find(a => a.id === id)
+    if (!addrToUpdate) return
+
+    try {
+      const res = await saveAddressAction({
+        id: addrToUpdate.id,
+        label: addrToUpdate.label,
+        is_default: true,
+        full_name: addrToUpdate.fullName,
+        street: addrToUpdate.street,
+        city: addrToUpdate.city,
+        state: addrToUpdate.state,
+        pincode: addrToUpdate.pincode,
+        phone: addrToUpdate.phone
+      })
+
+      if (res.success) {
+        addToast('Default address updated.', 'success')
+        loadUserData()
+      } else {
+        addToast(res.error || 'Failed to update default address.', 'error')
+      }
+    } catch {
+      addToast('Error updating default address.', 'error')
+    }
   }
 
   // Copy helper
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     addToast(`Code ${text} copied to clipboard!`, 'info')
+  }
+
+  if (isLoadingUser) {
+    return (
+      <main className="min-h-screen flex flex-col bg-background font-sans">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center p-8 bg-muted/10">
+          <div className="flex flex-col items-center gap-3">
+            <span className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-muted-foreground font-light animate-pulse">Loading account session...</p>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    )
+  }
+
+  if (!user) {
+    return (
+      <main className="min-h-screen flex flex-col bg-background font-sans">
+        <Navbar />
+        <div className="flex-1 bg-muted/20 py-16 px-4 flex items-center justify-center">
+          <div className="w-full max-w-md bg-card border border-border/80 rounded-[32px] p-6 md:p-8 shadow-2xl flex flex-col items-center">
+            <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 flex items-center justify-center border border-border bg-white shadow-sm mb-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logos/logo-sn.jpeg" alt="Susmita Nursery Logo" className="object-cover w-full h-full" />
+            </div>
+            <h1 className="text-xl font-bold text-neutral-dark tracking-tight">Access Your Account</h1>
+            <p className="text-xs text-muted-foreground text-center mt-1 mb-6">
+              Sign in or create a standard user profile to manage plant orders, check physical store pickup codes, and save addresses.
+            </p>
+            <InlineAuthForms />
+          </div>
+        </div>
+        <Footer />
+      </main>
+    )
   }
 
   return (
@@ -324,7 +455,7 @@ export default function UserAccountPage() {
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                       activeTab === 'reservations' ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
                     }`}>
-                      {MOCK_RESERVATIONS.length}
+                      {reservations.length}
                     </span>
                   </button>
 
@@ -358,6 +489,16 @@ export default function UserAccountPage() {
                     <span className="flex items-center gap-2.5">
                       <User size={16} />
                       Profile & Settings
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={logoutUser}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 transition-all cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <X size={16} />
+                      Sign Out
                     </span>
                   </button>
 
@@ -422,76 +563,84 @@ export default function UserAccountPage() {
                   </div>
 
                   <div className="space-y-5">
-                    {MOCK_RESERVATIONS.map((res) => (
-                      <div key={res.id} className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow space-y-4">
-                        
-                        {/* Reservation Top Bar */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-4">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2.5">
-                              <span className="font-serif font-bold text-base text-foreground">{res.id}</span>
-                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1 ${
-                                res.status === 'Ready for Pickup'
-                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                  : 'bg-neutral-100 text-neutral-700 border border-neutral-300'
-                              }`}>
-                                {res.status === 'Ready for Pickup' ? <CheckCircle2 size={12} /> : <Store size={12} />}
-                                {res.status}
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground font-light">
-                              Reserved on {res.date} • {res.items.length} specimen(s)
-                            </p>
-                          </div>
-
-                          <button
-                            onClick={() => setActiveReservationModal(res)}
-                            className="px-3.5 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto"
-                          >
-                            <Info size={14} />
-                            View Store Pass
-                          </button>
-                        </div>
-
-                        {/* Plant Items with Real Catalog Product Images */}
-                        <div className="space-y-3.5">
-                          {res.items.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between gap-4">
-                              <div className="flex items-center gap-3.5">
-                                <div className="w-14 h-14 bg-muted border border-border/80 rounded-xl overflow-hidden shrink-0 relative">
-                                  <Image
-                                    src={item.image}
-                                    alt={item.name}
-                                    fill
-                                    sizes="56px"
-                                    className="object-cover"
-                                  />
-                                </div>
-                                <div>
-                                  <p className="text-xs font-semibold text-foreground">{item.name}</p>
-                                  <p className="text-[11px] text-muted-foreground font-light">Size: {item.size} • Qty: {item.qty}</p>
-                                </div>
+                    {reservations.length > 0 ? (
+                      reservations.map((res) => (
+                        <div key={res.id} className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow space-y-4">
+                          
+                          {/* Reservation Top Bar */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2.5">
+                                <span className="font-serif font-bold text-base text-foreground">{res.id}</span>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1 ${
+                                  res.status === 'Ready for Pickup'
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                    : 'bg-neutral-100 text-neutral-700 border border-neutral-300'
+                                }`}>
+                                  {res.status === 'Ready for Pickup' ? <CheckCircle2 size={12} /> : <Store size={12} />}
+                                  {res.status}
+                                </span>
                               </div>
-                              <span className="text-xs font-bold text-foreground">₹{item.price * item.qty}</span>
+                              <p className="text-xs text-muted-foreground font-light">
+                                Reserved on {res.date} • {res.items.length} specimen(s)
+                              </p>
                             </div>
-                          ))}
-                        </div>
 
-                        {/* Store Info Footer */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-border/60 text-xs">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Store size={13} className="text-primary shrink-0" />
-                            <span className="truncate max-w-xs sm:max-w-md">{res.storeLocation}</span>
+                            <button
+                              onClick={() => setActiveReservationModal(res)}
+                              className="px-3.5 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto"
+                            >
+                              <Info size={14} />
+                              View Store Pass
+                            </button>
                           </div>
 
-                          <div className="flex items-center gap-2 justify-between sm:justify-end">
-                            <span className="text-muted-foreground font-light">Estimated Total:</span>
-                            <span className="text-base font-sans font-bold text-primary tabular-nums">₹{res.items.reduce((acc, i) => acc + i.price * i.qty, 0)}</span>
+                          {/* Plant Items with Real Catalog Product Images */}
+                          <div className="space-y-3.5">
+                            {res.items.map((item) => (
+                              <div key={item.id} className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3.5">
+                                  <div className="w-14 h-14 bg-muted border border-border/80 rounded-xl overflow-hidden shrink-0 relative">
+                                    <Image
+                                      src={item.image}
+                                      alt={item.name}
+                                      fill
+                                      sizes="56px"
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-semibold text-foreground">{item.name}</p>
+                                    <p className="text-[11px] text-muted-foreground font-light">Size: {item.size} • Qty: {item.qty}</p>
+                                  </div>
+                                </div>
+                                <span className="text-xs font-bold text-foreground">₹{item.price * item.qty}</span>
+                              </div>
+                            ))}
                           </div>
-                        </div>
 
+                          {/* Store Info Footer */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-border/60 text-xs">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Store size={13} className="text-primary shrink-0" />
+                              <span className="truncate max-w-xs sm:max-w-md">{res.storeLocation}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2 justify-between sm:justify-end">
+                              <span className="text-muted-foreground font-light">Estimated Total:</span>
+                              <span className="text-base font-sans font-bold text-primary tabular-nums">₹{res.items.reduce((acc, i) => acc + i.price * i.qty, 0)}</span>
+                            </div>
+                          </div>
+
+                        </div>
+                      ))
+                    ) : (
+                      <div className="bg-card border border-border/80 rounded-2xl p-8 text-center text-xs text-muted-foreground font-light">
+                        <Store className="w-8 h-8 text-neutral-400 mx-auto mb-2.5" />
+                        <p>You have no active plant reservations.</p>
+                        <p className="mt-1">Plants you reserve at store checkout will show up here for easy pickup code generation!</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -520,51 +669,59 @@ export default function UserAccountPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {addresses.map((addr) => (
-                      <div key={addr.id} className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col justify-between">
-                        <div className="space-y-2 text-xs">
-                          <div className="flex items-center justify-between">
-                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold flex items-center gap-1">
-                              {addr.label === 'Home' ? <Home size={11} /> : <Briefcase size={11} />}
-                              {addr.label}
-                            </span>
-                            {addr.isDefault && (
-                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                                Default Address
+                    {addresses.length > 0 ? (
+                      addresses.map((addr) => (
+                        <div key={addr.id} className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col justify-between">
+                          <div className="space-y-2 text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold flex items-center gap-1">
+                                {addr.label === 'Home' ? <Home size={11} /> : <Briefcase size={11} />}
+                                {addr.label}
                               </span>
-                            )}
+                              {addr.isDefault && (
+                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                  Default Address
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="font-bold text-sm text-foreground">{addr.fullName}</p>
+                            <p className="text-muted-foreground leading-relaxed">{addr.street}</p>
+                            <p className="text-muted-foreground">{addr.city}, {addr.state} - <span className="font-semibold text-foreground">{addr.pincode}</span></p>
+                            <p className="text-muted-foreground font-medium">Phone: {addr.phone}</p>
                           </div>
 
-                          <p className="font-bold text-sm text-foreground">{addr.fullName}</p>
-                          <p className="text-muted-foreground leading-relaxed">{addr.street}</p>
-                          <p className="text-muted-foreground">{addr.city}, {addr.state} - <span className="font-semibold text-foreground">{addr.pincode}</span></p>
-                          <p className="text-muted-foreground font-medium">Phone: {addr.phone}</p>
-                        </div>
+                          <div className="flex items-center justify-between pt-3 border-t border-border/60 text-xs">
+                            {!addr.isDefault ? (
+                              <button
+                                onClick={() => handleSetDefaultAddress(addr.id)}
+                                className="text-primary hover:underline font-semibold cursor-pointer"
+                              >
+                                Set as Default
+                              </button>
+                            ) : (
+                              <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                                <CheckCircle2 size={12} /> Active Default
+                              </span>
+                            )}
 
-                        <div className="flex items-center justify-between pt-3 border-t border-border/60 text-xs">
-                          {!addr.isDefault ? (
                             <button
-                              onClick={() => handleSetDefaultAddress(addr.id)}
-                              className="text-primary hover:underline font-semibold cursor-pointer"
+                              onClick={() => handleDeleteAddress(addr.id)}
+                              className="text-red-500 hover:text-red-700 p-1 rounded transition-colors cursor-pointer"
+                              title="Delete address"
                             >
-                              Set as Default
+                              <Trash2 size={14} />
                             </button>
-                          ) : (
-                            <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                              <CheckCircle2 size={12} /> Active Default
-                            </span>
-                          )}
-
-                          <button
-                            onClick={() => handleDeleteAddress(addr.id)}
-                            className="text-red-500 hover:text-red-700 p-1 rounded transition-colors cursor-pointer"
-                            title="Delete address"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="col-span-full bg-card border border-border/80 rounded-2xl p-8 text-center text-xs text-muted-foreground font-light">
+                        <MapPin className="w-8 h-8 text-neutral-400 mx-auto mb-2.5" />
+                        <p>No saved addresses found.</p>
+                        <p className="mt-1">Add shipping and billing addresses for faster offline coordination!</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -899,3 +1056,221 @@ export default function UserAccountPage() {
     </main>
   )
 }
+
+function InlineAuthForms() {
+  const { refreshSession, addToast } = useShop()
+  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
+  
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+
+    try {
+      const res = await customerLoginAction({ email, password })
+      if (res.success) {
+        setSuccess(true)
+        addToast('Sign in successful!', 'success')
+        await refreshSession()
+      } else {
+        setError(res.error || 'Invalid email or password.')
+        setLoading(false)
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Connection failed.')
+      setLoading(false)
+    }
+  }
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+
+    try {
+      const res = await customerSignupAction({ email, password, fullName, phone })
+      if (res.success) {
+        setSuccess(true)
+        addToast('Account created! Please sign in.', 'success')
+        setTimeout(() => {
+          setActiveTab('signin')
+          setSuccess(false)
+          setLoading(false)
+          setPassword('')
+        }, 1500)
+      } else {
+        setError(res.error || 'Failed to register.')
+        setLoading(false)
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Registration failed.')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="w-full">
+      <div className="flex bg-muted/60 p-1 rounded-xl mb-6 text-xs font-semibold">
+        <button
+          onClick={() => { setActiveTab('signin'); setError(null); }}
+          className={`flex-1 py-2 rounded-lg transition-all cursor-pointer ${
+            activeTab === 'signin' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Sign In
+        </button>
+        <button
+          onClick={() => { setActiveTab('signup'); setError(null); }}
+          className={`flex-1 py-2 rounded-lg transition-all cursor-pointer ${
+            activeTab === 'signup' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Register
+        </button>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-2xl text-xs flex items-center gap-2 mb-4">
+          <AlertCircle size={14} className="shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 p-3 rounded-2xl text-xs flex items-center gap-2 mb-4">
+          <CheckCircle size={14} className="shrink-0" />
+          <span>{activeTab === 'signin' ? 'Signing in...' : 'Registration successful!'}</span>
+        </div>
+      )}
+
+      {activeTab === 'signin' ? (
+        <form onSubmit={handleSignIn} className="space-y-4 text-xs font-sans">
+          <div className="space-y-1">
+            <label className="font-semibold text-neutral-700">Email Address</label>
+            <div className="relative">
+              <Mail size={14} className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@example.com"
+                className="w-full bg-muted/40 border border-border/80 pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground font-medium"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="font-semibold text-neutral-700">Password</label>
+            <div className="relative">
+              <Lock size={14} className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-muted/40 border border-border/80 pl-10 pr-10 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600 focus:outline-none cursor-pointer"
+              >
+                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={loading || success}
+            className="w-full bg-primary hover:bg-primary-emerald disabled:bg-primary/60 text-white py-3 rounded-full font-bold text-xs cursor-pointer shadow-md transition-all flex items-center justify-center gap-2 mt-2"
+          >
+            {loading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <span>Sign In</span>}
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={handleSignUp} className="space-y-4 text-xs font-sans">
+          <div className="space-y-1">
+            <label className="font-semibold text-neutral-700">Full Name</label>
+            <div className="relative">
+              <User size={14} className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Your Name"
+                className="w-full bg-muted/40 border border-border/80 pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground font-medium"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="font-semibold text-neutral-700">Email Address</label>
+            <div className="relative">
+              <Mail size={14} className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@example.com"
+                className="w-full bg-muted/40 border border-border/80 pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground font-medium"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="font-semibold text-neutral-700">Phone Number (Optional)</label>
+            <div className="relative">
+              <Phone size={14} className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91 98765 43210"
+                className="w-full bg-muted/40 border border-border/80 pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground font-medium"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="font-semibold text-neutral-700">Password</label>
+            <div className="relative">
+              <Lock size={14} className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-muted/40 border border-border/80 pl-10 pr-10 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600 focus:outline-none cursor-pointer"
+              >
+                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={loading || success}
+            className="w-full bg-primary hover:bg-primary-emerald disabled:bg-primary/60 text-white py-3 rounded-full font-bold text-xs cursor-pointer shadow-md transition-all flex items-center justify-center gap-2 mt-2"
+          >
+            {loading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <span>Register Account</span>}
+          </button>
+        </form>
+      )}
+    </div>
+  )
+}
+

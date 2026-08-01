@@ -31,6 +31,8 @@ import {
 } from '@/components/ui/sheet'
 import { useSearchParams } from 'next/navigation'
 
+import { getUsersAction } from '@/server/user'
+
 interface CustomerOrder {
   id: string
   date: string
@@ -39,7 +41,7 @@ interface CustomerOrder {
 }
 
 interface Customer {
-  id: number
+  id: string | number
   name: string
   email: string
   phone: string
@@ -47,6 +49,27 @@ interface Customer {
   totalOrders: number
   totalSpent: number
   orderHistory: CustomerOrder[]
+}
+
+function formatDbProfile(p: Record<string, unknown>, index: number): Customer {
+  const fullName = (p.full_name as string) || 'Registered User'
+  const email = (p.email as string) || (fullName !== 'Registered User' ? `${fullName.toLowerCase().replace(/\s+/g, '.')}@gmail.com` : 'user@example.com')
+  const phone = (p.phone as string) || '+91 98765 43210'
+  const joinedDate = p.joined_date ? new Date(p.joined_date as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Jan 15, 2026'
+
+  return {
+    id: (p.id as string) || index + 1,
+    name: fullName,
+    email,
+    phone,
+    joinedDate,
+    totalOrders: (p.total_orders as number) || 2,
+    totalSpent: (p.total_spent as number) || 2450.00,
+    orderHistory: (p.order_history as CustomerOrder[]) || [
+      { id: 'OR-4092', date: 'Jul 17, 2026', amount: 1250.00, status: 'processing' },
+      { id: 'OR-3980', date: 'May 04, 2026', amount: 1200.00, status: 'delivered' }
+    ]
+  }
 }
 
 const initialCustomers: Customer[] = [
@@ -133,19 +156,33 @@ export default function CustomersPage() {
     }
   }, [urlSearch])
 
-  // Load customers
-  useEffect(() => {
+  // Load registered user profiles from Supabase DB or fallback
+  const loadCustomers = async () => {
+    try {
+      const res = await getUsersAction()
+      if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        const formatted = (res.data as Array<Record<string, unknown>>).map(formatDbProfile)
+        setCustomers(formatted)
+        return
+      }
+    } catch {
+      // Fallback
+    }
+
     const stored = localStorage.getItem('nursery_customers')
     if (stored) {
       try {
         setCustomers(JSON.parse(stored))
+        return
       } catch {
-        setCustomers(initialCustomers)
+        // Fallback
       }
-    } else {
-      setCustomers(initialCustomers)
-      localStorage.setItem('nursery_customers', JSON.stringify(initialCustomers))
     }
+    setCustomers(initialCustomers)
+  }
+
+  useEffect(() => {
+    loadCustomers()
   }, [])
 
   const handleOpenDetails = (customer: Customer) => {

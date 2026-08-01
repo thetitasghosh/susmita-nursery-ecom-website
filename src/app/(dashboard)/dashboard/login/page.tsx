@@ -2,44 +2,67 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Mail, Lock, CheckCircle, AlertCircle, Sprout } from 'lucide-react'
+import { Mail, Lock, CheckCircle, AlertCircle } from 'lucide-react'
+import { loginAction, getAccountAction } from '@/server/auth'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('admin@susmitanursery.com')
-  const [password, setPassword] = useState('admin')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  // Redirect to dashboard if already authenticated
+  // Redirect to dashboard if already authenticated as admin
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const isAuth = sessionStorage.getItem('nursery_admin_auth') === 'true'
-      if (isAuth) {
-        router.push('/dashboard')
+    async function checkAuth() {
+      try {
+        const res = await getAccountAction()
+        if (res.success && res.profile?.role === 'admin') {
+          router.push('/dashboard')
+        }
+      } catch {
+        // Not authenticated
       }
     }
+    checkAuth()
   }, [router])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
-    // Simulate database auth check after 800ms
-    setTimeout(() => {
-      if (email === 'admin@susmitanursery.com' && password === 'admin') {
-        setSuccess(true)
-        sessionStorage.setItem('nursery_admin_auth', 'true')
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 1000)
+    const formData = new FormData()
+    formData.append('email', email)
+    formData.append('password', password)
+
+    try {
+      const res = await loginAction(formData)
+
+      if (res.success) {
+        const acc = await getAccountAction()
+        if (acc.success && acc.profile?.role === 'admin') {
+          setSuccess(true)
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('nursery_admin_auth', 'true')
+          }
+          setTimeout(() => {
+            router.push('/dashboard')
+          }, 800)
+        } else {
+          setError('Access Denied: Customer accounts are not authorized to view the supervisor dashboard.')
+          setLoading(false)
+        }
       } else {
-        setError('Invalid administrative credentials. Please check spelling.')
+        setError(res.error || 'Invalid administrative credentials. Please check spelling.')
         setLoading(false)
       }
-    }, 800)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Connection error. Please try again.'
+      setError(msg)
+      setLoading(false)
+    }
   }
 
   return (
@@ -58,16 +81,6 @@ export default function LoginPage() {
           <p className="text-xs text-muted-foreground font-light">
             Enter nursery supervisor authorization credentials.
           </p>
-        </div>
-
-        {/* Credentials hints alert */}
-        <div className="w-full bg-primary/5 border border-primary/20 rounded-2xl p-4 mb-6 text-xs space-y-1">
-          <span className="font-bold text-primary block leading-none flex items-center gap-1.5 mb-1.5">
-            <Sprout size={13} className="text-secondary" />
-            <span>Demo Auth Credentials</span>
-          </span>
-          <p className="text-neutral-600 font-light"><span className="font-semibold text-neutral-700">Email:</span> admin@susmitanursery.com</p>
-          <p className="text-neutral-600 font-light"><span className="font-semibold text-neutral-700">Password:</span> admin</p>
         </div>
 
         {error && (
@@ -131,3 +144,4 @@ export default function LoginPage() {
     </div>
   )
 }
+

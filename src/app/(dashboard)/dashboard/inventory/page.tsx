@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 import { allProducts, Product } from '@/lib/products'
 
+import { getProductsAction, updateProductAction } from '@/server/product'
+
 interface InventoryItem {
   id: number
   name: string
@@ -30,36 +32,6 @@ export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
 
-  // Save changes back to nursery_products so Products tab matches
-  const saveToProducts = useCallback((updatedItems: InventoryItem[]) => {
-    const stored = localStorage.getItem('nursery_products')
-    let fullProducts: EnrichedProduct[] = []
-    
-    if (stored) {
-      try {
-        fullProducts = JSON.parse(stored)
-      } catch {
-        fullProducts = [...allProducts]
-      }
-    } else {
-      fullProducts = [...allProducts]
-    }
-
-    const updatedProducts = fullProducts.map(p => {
-      const match = updatedItems.find(i => i.id === p.id)
-      if (match) {
-        return {
-          ...p,
-          stock_quantity: match.stock_quantity,
-          reserved_quantity: match.reserved_quantity
-        }
-      }
-      return p
-    })
-
-    localStorage.setItem('nursery_products', JSON.stringify(updatedProducts))
-  }, [])
-
   const fallbackInventory = useCallback(() => {
     const defaultInv = allProducts.map(p => ({
       id: p.id,
@@ -71,19 +43,32 @@ export default function InventoryPage() {
       reserved_quantity: p.id === 1 ? 1 : p.id === 2 ? 2 : 0
     }))
     setItems(defaultInv)
-    saveToProducts(defaultInv)
-  }, [saveToProducts])
+  }, [])
 
-  const loadInventory = useCallback(() => {
+  const loadInventory = useCallback(async () => {
+    try {
+      const res = await getProductsAction()
+      if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setItems((res.data as EnrichedProduct[]).map((p) => ({
+          id: p.id,
+          name: p.name,
+          scientificName: p.scientificName,
+          category: p.category,
+          image: p.image,
+          stock_quantity: p.stock_quantity !== undefined ? p.stock_quantity : (p.id === 1 ? 2 : p.id === 2 ? 4 : p.id === 6 ? 3 : p.id === 19 ? 0 : 15),
+          reserved_quantity: p.reserved_quantity !== undefined ? p.reserved_quantity : (p.id === 1 ? 1 : p.id === 2 ? 2 : 0)
+        })))
+        return
+      }
+    } catch {
+      // Fallback
+    }
+
     const stored = localStorage.getItem('nursery_products')
-    let useDefault = true
     if (stored) {
       try {
         const decoded = JSON.parse(stored)
-        const hasOldCategories = decoded.some((p: { category: string }) => 
-          ['Bonsai', 'Palms', 'Succulents', 'Tools', 'Plant Medicine', 'Air Purifying', 'Flowering Plants'].includes(p.category)
-        )
-        if (!hasOldCategories && decoded.length >= 26) {
+        if (decoded.length > 0) {
           setItems(decoded.map((p: EnrichedProduct) => ({
             id: p.id,
             name: p.name,
@@ -93,37 +78,42 @@ export default function InventoryPage() {
             stock_quantity: p.stock_quantity !== undefined ? p.stock_quantity : (p.id === 1 ? 2 : p.id === 2 ? 4 : p.id === 6 ? 3 : p.id === 19 ? 0 : 15),
             reserved_quantity: p.reserved_quantity !== undefined ? p.reserved_quantity : (p.id === 1 ? 1 : p.id === 2 ? 2 : 0)
           })))
-          useDefault = false
+          return
         }
       } catch {
         // Fallback
       }
     }
     
-    if (useDefault) {
-      fallbackInventory()
-    }
+    fallbackInventory()
   }, [fallbackInventory])
 
-  // Load from localStorage (shared with products)
   useEffect(() => {
     loadInventory()
   }, [loadInventory])
 
-  // Update stock fields
-  const handleUpdateStock = (id: number, field: 'stock_quantity' | 'reserved_quantity', delta: number) => {
+  // Update stock fields in DB and local state
+  const handleUpdateStock = async (id: number, field: 'stock_quantity' | 'reserved_quantity', delta: number) => {
+    const targetItem = items.find(i => i.id === id)
+    if (!targetItem) return
+
+    const newVal = Math.max(0, targetItem[field] + delta)
     const updated = items.map(item => {
       if (item.id === id) {
-        const val = Math.max(0, item[field] + delta)
-        return { ...item, [field]: val }
+        return { ...item, [field]: newVal }
       }
       return item
     })
     setItems(updated)
-    saveToProducts(updated)
+
+    try {
+      await updateProductAction(id, { [field]: newVal })
+    } catch {
+      // Ignore
+    }
   }
 
-  const handleManualInput = (id: number, field: 'stock_quantity' | 'reserved_quantity', value: string) => {
+  const handleManualInput = async (id: number, field: 'stock_quantity' | 'reserved_quantity', value: string) => {
     const parsed = Math.max(0, parseInt(value) || 0)
     const updated = items.map(item => {
       if (item.id === id) {
@@ -132,7 +122,12 @@ export default function InventoryPage() {
       return item
     })
     setItems(updated)
-    saveToProducts(updated)
+
+    try {
+      await updateProductAction(id, { [field]: parsed })
+    } catch {
+      // Ignore
+    }
   }
 
   const categories = [

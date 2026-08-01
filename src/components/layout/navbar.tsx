@@ -24,6 +24,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useShop } from "@/lib/shop-context";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { LoginModal } from "@/components/auth/login-modal";
+
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,7 +33,23 @@ export function Navbar() {
   const [mobilePlantsOpen, setMobilePlantsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { cartCount, wishlist } = useShop();
+  const { cartCount, wishlist, user, openLoginModal } = useShop();
+
+  const handleAccountClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      openLoginModal();
+    }
+  };
+
+  const handleMobileAccountClick = (e: React.MouseEvent) => {
+    closeMenu();
+    if (!user) {
+      e.preventDefault();
+      openLoginModal();
+    }
+  };
+
 
   const plantCategories = [
     { name: "Indoor Plants", href: "/products?category=Indoor Plants" },
@@ -202,6 +220,7 @@ export function Navbar() {
                 href="/account"
                 title="My Account"
                 aria-label="User Account"
+                onClick={handleAccountClick}
                 className="p-2.5 hover:bg-muted rounded-full transition-colors hidden sm:inline-flex"
               >
                 <User size={18} className="text-foreground" />
@@ -375,7 +394,7 @@ export function Navbar() {
                 {/* Account, Wishlist & Orders */}
                 <Link
                   href="/account"
-                  onClick={closeMenu}
+                  onClick={handleMobileAccountClick}
                   className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
@@ -461,6 +480,7 @@ export function Navbar() {
           </>
         )}
       </AnimatePresence>
+      <LoginModal />
     </>
   );
 }

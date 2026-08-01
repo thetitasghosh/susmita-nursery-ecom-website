@@ -12,7 +12,9 @@ import {
   Star, 
   Link as LinkIcon,
   HelpCircle,
-  X
+  X,
+  UploadCloud,
+  Image as ImageIcon
 } from 'lucide-react'
 import { allProducts, Product } from '@/lib/products'
 import {
@@ -33,6 +35,14 @@ import {
   SheetClose
 } from '@/components/ui/sheet'
 import { useSearchParams } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
+
+import { 
+  getProductsAction, 
+  createProductAction, 
+  updateProductAction, 
+  deleteProductAction 
+} from '@/server/product'
 
 type EnrichedProduct = Product & {
   slug?: string
@@ -61,6 +71,47 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   
+  // Image Uploading State & Function
+  const [uploading, setUploading] = useState(false)
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      setUploading(true)
+      const supabase = createClient()
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`
+      const filePath = `uploads/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(filePath, file)
+
+      if (uploadError) {
+        throw uploadError
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath)
+
+      return publicUrl
+    } catch (err: unknown) {
+      alert('Error uploading image: ' + (err instanceof Error ? err.message : String(err)))
+      return null
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // Recommendations search and dropdown state
+  const [toolSearch, setToolSearch] = useState('')
+  const [medSearch, setMedSearch] = useState('')
+  const [toolDropdownOpen, setToolDropdownOpen] = useState(false)
+  const [medDropdownOpen, setMedDropdownOpen] = useState(false)
+
+  // Drag and drop states
+  const [dragOverCover, setDragOverCover] = useState(false)
+  const [dragOverGallery, setDragOverGallery] = useState(false)
+
   useEffect(() => {
     if (urlSearch !== null) {
       setSearchTerm(urlSearch)
@@ -80,9 +131,15 @@ export default function ProductsPage() {
   const [formDescription, setFormDescription] = useState('')
   
   // Cover Photo and Supporting Photos
-  const [formCoverImage, setFormCoverImage] = useState('/images/plants/monstera-plant.jpg')
-  const [formSupportingImages, setFormSupportingImages] = useState<string[]>([])
-  const [newSupportingImage, setNewSupportingImage] = useState('')
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverPreview, setCoverPreview] = useState('')
+  
+  interface GalleryItem {
+    id: string
+    file: File | null
+    url: string
+  }
+  const [supportingFiles, setSupportingFiles] = useState<GalleryItem[]>([])
 
   // Care specs details
   const [formLight, setFormLight] = useState('Bright, indirect light')
@@ -104,37 +161,44 @@ export default function ProductsPage() {
   const [nestedTools, setNestedTools] = useState<number[]>([])
   const [nestedMedicines, setNestedMedicines] = useState<number[]>([])
 
-  // Load products from localStorage or standard list
-  useEffect(() => {
+  // Load products from Supabase database with fallback to local definitions
+  const loadProducts = async () => {
+    try {
+      const res = await getProductsAction()
+      if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setProducts(res.data as EnrichedProduct[])
+        return
+      }
+    } catch {
+      // Fallback
+    }
+
     const stored = localStorage.getItem('nursery_products')
-    let useDefault = true
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
-        const hasOldCategories = parsed.some((p: { category: string }) => 
-          ['Bonsai', 'Palms', 'Succulents', 'Tools', 'Plant Medicine', 'Air Purifying', 'Flowering Plants'].includes(p.category)
-        )
-        if (!hasOldCategories && parsed.length >= 26) {
+        if (parsed.length > 0) {
           setProducts(parsed)
-          useDefault = false
+          return
         }
       } catch {
         // Fallback
       }
     }
 
-    if (useDefault) {
-      const enriched: EnrichedProduct[] = allProducts.map(p => ({
-        ...p,
-        supportingImages: [
-          '/images/plants/succulent-collection.jpg',
-          '/images/plants/aglaonema-red.jpg'
-        ],
-        nestedItemIds: p.category === 'Gardening Tools' || p.category === 'Plants Medicine' || p.category === 'Organic Fertilizer' ? [] : [17, 19]
-      }))
-      setProducts(enriched)
-      localStorage.setItem('nursery_products', JSON.stringify(enriched))
-    }
+    const enriched: EnrichedProduct[] = allProducts.map(p => ({
+      ...p,
+      supportingImages: [
+        '/images/plants/succulent-collection.jpg',
+        '/images/plants/aglaonema-red.jpg'
+      ],
+      nestedItemIds: p.category === 'Gardening Tools' || p.category === 'Plants Medicine' || p.category === 'Organic Fertilizer' ? [] : [17, 19]
+    }))
+    setProducts(enriched)
+  }
+
+  useEffect(() => {
+    loadProducts()
   }, [])
 
   // Auto-slugify name
@@ -145,8 +209,12 @@ export default function ProductsPage() {
   }, [formName, editingProduct])
 
   // Get lists of Tools and Medicines for nesting checkboxes
-  const availableTools = products.filter(p => p.category === 'Tools')
-  const availableMedicines = products.filter(p => p.category === 'Plant Medicine')
+  const availableTools = products.filter(
+    p => p.category === 'Gardening Tools' || p.category === 'No1. Fiber Pots' || p.category === 'Ceramic Pots' || p.category === 'No1. Clay Pots' || p.category === 'Plastic Pots'
+  )
+  const availableMedicines = products.filter(
+    p => p.category === 'Plants Medicine' || p.category === 'Organic Fertilizer'
+  )
 
   // Open sheet for add
   const handleOpenAdd = () => {
@@ -157,8 +225,9 @@ export default function ProductsPage() {
     setFormPrice(299)
     setFormScientificName('')
     setFormDescription('')
-    setFormCoverImage('/images/plants/monstera-plant.jpg')
-    setFormSupportingImages(['/images/plants/succulent-collection.jpg', '/images/plants/aglaonema-red.jpg'])
+    setCoverFile(null)
+    setCoverPreview('')
+    setSupportingFiles([])
     setFormLight('Bright, indirect light')
     setFormWater('Moderate')
     setFormHumidity('Moderate')
@@ -166,8 +235,12 @@ export default function ProductsPage() {
     setFormSoil('Well-draining mix')
     setFormSizes(['Medium'])
     setFormCareInstructions(['Keep in bright light.', 'Water weekly.'])
-    setNestedTools([17])
-    setNestedMedicines([19])
+    setNestedTools([])
+    setNestedMedicines([])
+    setToolSearch('')
+    setMedSearch('')
+    setToolDropdownOpen(false)
+    setMedDropdownOpen(false)
     
     setIsSheetOpen(true)
   }
@@ -181,8 +254,10 @@ export default function ProductsPage() {
     setFormPrice(product.price)
     setFormScientificName(product.scientificName || '')
     setFormDescription(product.description || '')
-    setFormCoverImage(product.image)
-    setFormSupportingImages(product.supportingImages || [])
+    setCoverFile(null)
+    setCoverPreview(product.image)
+    const gallery = product.supportingImages || product.images || []
+    setSupportingFiles(gallery.map(img => ({ id: Math.random().toString(), file: null, url: img })))
     
     setFormLight(product.details?.light || 'Moderate')
     setFormWater(product.details?.water || 'Moderate')
@@ -190,72 +265,70 @@ export default function ProductsPage() {
     setFormTemperature(product.details?.temperature || '60-80°F')
     setFormSoil(product.details?.soil || 'Well-draining')
 
-    setFormSizes(product.sizes || ['Standard'])
+    setFormSizes(product.sizes || ['Medium'])
     setFormCareInstructions(product.careInstructions || [])
 
     const nested = product.nestedItemIds || []
     setNestedTools(nested.filter((id: number) => availableTools.some(t => t.id === id)))
     setNestedMedicines(nested.filter((id: number) => availableMedicines.some(m => m.id === id)))
+    setToolSearch('')
+    setMedSearch('')
+    setToolDropdownOpen(false)
+    setMedDropdownOpen(false)
 
     setIsSheetOpen(true)
   }
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this product?')) {
+      await deleteProductAction(id)
       const updated = products.filter(p => p.id !== id)
       setProducts(updated)
       localStorage.setItem('nursery_products', JSON.stringify(updated))
     }
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formName) return
 
-    let updatedProducts: EnrichedProduct[] = []
-    const nestedItemIds = [...nestedTools, ...nestedMedicines]
-
-    if (editingProduct) {
-      updatedProducts = products.map(p => {
-        if (p.id === editingProduct.id) {
-          return {
-            ...p,
-            name: formName,
-            slug: formSlug,
-            category: formCategory,
-            price: Number(formPrice),
-            scientificName: formScientificName,
-            description: formDescription,
-            image: formCoverImage,
-            supportingImages: formSupportingImages,
-            details: {
-              light: formLight,
-              water: formWater,
-              humidity: formHumidity,
-              temperature: formTemperature,
-              soil: formSoil
-            },
-            sizes: formSizes,
-            careInstructions: formCareInstructions,
-            nestedItemIds
-          } as EnrichedProduct
+    setUploading(true)
+    try {
+      // 1. Upload Cover Image if a new file was chosen
+      let finalCoverUrl = coverPreview
+      if (coverFile) {
+        const uploadedUrl = await uploadImage(coverFile)
+        if (uploadedUrl) {
+          finalCoverUrl = uploadedUrl
+        } else {
+          throw new Error('Cover photo upload failed.')
         }
-        return p
-      })
-    } else {
-      const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1
-      const newProduct: EnrichedProduct = {
-        id: newId,
+      }
+
+      // 2. Upload Supporting Images if new files were chosen
+      const finalSupportingImages: string[] = []
+      for (const item of supportingFiles) {
+        if (item.file) {
+          const uploadedUrl = await uploadImage(item.file)
+          if (uploadedUrl) {
+            finalSupportingImages.push(uploadedUrl)
+          } else {
+            throw new Error('One of the supporting images failed to upload.')
+          }
+        } else {
+          finalSupportingImages.push(item.url)
+        }
+      }
+
+      const productPayload: Partial<Product> & { nestedItemIds?: number[] } = {
         name: formName,
         slug: formSlug,
         category: formCategory,
         price: Number(formPrice),
-        rating: 5.0,
-        reviews: 1,
         scientificName: formScientificName,
         description: formDescription,
-        image: formCoverImage,
-        supportingImages: formSupportingImages,
+        image: finalCoverUrl,
+        images: finalSupportingImages,
         details: {
           light: formLight,
           water: formWater,
@@ -265,26 +338,36 @@ export default function ProductsPage() {
         },
         sizes: formSizes,
         careInstructions: formCareInstructions,
-        nestedItemIds
+        nestedItemIds: [...nestedTools, ...nestedMedicines]
       }
-      updatedProducts = [newProduct, ...products]
-    }
 
-    setProducts(updatedProducts)
-    localStorage.setItem('nursery_products', JSON.stringify(updatedProducts))
-    setIsSheetOpen(false)
+      if (editingProduct) {
+        await updateProductAction(editingProduct.id, productPayload)
+      } else {
+        await createProductAction(productPayload)
+      }
+
+      await loadProducts()
+      setIsSheetOpen(false)
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : String(err))
+    } finally {
+      setUploading(false)
+    }
   }
 
   // Supporting Photos CRUD
-  const addSupportingImage = () => {
-    if (newSupportingImage.trim() && !formSupportingImages.includes(newSupportingImage)) {
-      setFormSupportingImages([...formSupportingImages, newSupportingImage.trim()])
-      setNewSupportingImage('')
+  const addSupportingFile = (file: File) => {
+    const newItem = {
+      id: Math.random().toString(),
+      file,
+      url: URL.createObjectURL(file)
     }
+    setSupportingFiles([...supportingFiles, newItem])
   }
 
-  const removeSupportingImage = (idx: number) => {
-    setFormSupportingImages(formSupportingImages.filter((_, i) => i !== idx))
+  const removeSupportingFile = (id: string) => {
+    setSupportingFiles(supportingFiles.filter(item => item.id !== id))
   }
 
   // Sizes CRUD
@@ -311,22 +394,7 @@ export default function ProductsPage() {
     setFormCareInstructions(formCareInstructions.filter((_, i) => i !== idx))
   }
 
-  // Toggle recommendation checkboxes
-  const toggleToolRecommendation = (id: number) => {
-    if (nestedTools.includes(id)) {
-      setNestedTools(nestedTools.filter(x => x !== id))
-    } else {
-      setNestedTools([...nestedTools, id])
-    }
-  }
 
-  const toggleMedicineRecommendation = (id: number) => {
-    if (nestedMedicines.includes(id)) {
-      setNestedMedicines(nestedMedicines.filter(x => x !== id))
-    } else {
-      setNestedMedicines([...nestedMedicines, id])
-    }
-  }
 
   const categories = [
     'All',
@@ -601,70 +669,110 @@ export default function ProductsPage() {
                 <span className="w-1.5 h-1.5 bg-secondary rounded-full" />
                 <span>Product Visuals & Showcase Photos</span>
               </h3>
-
-              <div className="space-y-2">
+                            <div className="space-y-2">
                 <label className="font-semibold text-neutral-700 block">Main Cover Photo</label>
-                <div className="flex gap-4 items-start">
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden border border-border relative shrink-0 bg-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={formCoverImage} alt="Cover Preview" className="object-cover w-full h-full" />
+                <div className="flex flex-col md:flex-row gap-4 items-stretch">
+                  {/* Left: Preview thumbnail */}
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden border border-border relative shrink-0 bg-muted flex items-center justify-center">
+                    {coverPreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={coverPreview} alt="Cover Preview" className="object-cover w-full h-full" />
+                    ) : (
+                      <ImageIcon className="text-neutral-400 w-8 h-8" />
+                    )}
                   </div>
-                  <div className="flex-1 space-y-1.5">
-                    <span className="text-[10px] text-neutral-400 font-light block">Select/input an image URL path</span>
-                    <input
-                      type="text"
-                      value={formCoverImage}
-                      onChange={(e) => setFormCoverImage(e.target.value)}
-                      className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-mono"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setFormCoverImage('/images/plants/monstera-plant.jpg')}
-                        className="px-2 py-1 text-[9px] bg-muted border border-border hover:bg-neutral-200 rounded font-semibold cursor-pointer"
-                      >
-                        Use Monstera
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormCoverImage('/images/plants/succulent-collection.jpg')}
-                        className="px-2 py-1 text-[9px] bg-muted border border-border hover:bg-neutral-200 rounded font-semibold cursor-pointer"
-                      >
-                        Use Succulent
-                      </button>
-                    </div>
+                  
+                  {/* Right: Dropzone / Input wrapper */}
+                  <div className="flex-1 flex flex-col justify-between gap-3">
+                    <label
+                      onDragOver={(e) => { e.preventDefault(); setDragOverCover(true); }}
+                      onDragLeave={() => setDragOverCover(false)}
+                      onDrop={async (e) => {
+                        e.preventDefault();
+                        setDragOverCover(false);
+                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                          const file = e.dataTransfer.files[0];
+                          setCoverFile(file);
+                          setCoverPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                      className={`flex-1 border border-dashed rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ${
+                        dragOverCover
+                          ? 'border-primary bg-primary/5 text-primary scale-[0.99]'
+                          : 'border-border hover:border-primary bg-muted/20 hover:bg-primary/5 text-neutral-500'
+                      }`}
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            const file = e.target.files[0];
+                            setCoverFile(file);
+                            setCoverPreview(URL.createObjectURL(file));
+                          }
+                        }}
+                        className="hidden"
+                      />
+                      <UploadCloud className={`w-5 h-5 mb-1.5 transition-colors ${dragOverCover ? 'text-primary' : 'text-neutral-400'}`} />
+                      <span className="text-[11px] font-semibold block text-center leading-none">
+                        {coverFile ? `Selected: ${coverFile.name}` : 'Drag & Drop cover photo or click to browse'}
+                      </span>
+                    </label>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-3 pt-2">
                 <label className="font-semibold text-neutral-700 block">Supporting Gallery Photos (4:3 Aspect Ratio)</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Add another image URL path..."
-                    value={newSupportingImage}
-                    onChange={(e) => setNewSupportingImage(e.target.value)}
-                    className="flex-1 bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={addSupportingImage}
-                    className="bg-primary/10 border border-primary/20 hover:bg-primary hover:text-white text-primary px-4 rounded-xl font-bold transition-all cursor-pointer"
+                <div className="w-full">
+                  <label
+                    onDragOver={(e) => { e.preventDefault(); setDragOverGallery(true); }}
+                    onDragLeave={() => setDragOverGallery(false)}
+                    onDrop={async (e) => {
+                      e.preventDefault();
+                      setDragOverGallery(false);
+                      if (e.dataTransfer.files) {
+                        Array.from(e.dataTransfer.files).forEach(file => {
+                          addSupportingFile(file);
+                        });
+                      }
+                    }}
+                    className={`w-full min-h-[96px] border border-dashed rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ${
+                      dragOverGallery
+                        ? 'border-primary bg-primary/5 text-primary scale-[0.99]'
+                        : 'border-border hover:border-primary bg-muted/20 hover:bg-primary/5 text-neutral-500'
+                    }`}
                   >
-                    Add URL
-                  </button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => {
+                        if (e.target.files) {
+                          Array.from(e.target.files).forEach(file => {
+                            addSupportingFile(file);
+                          });
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <UploadCloud className={`w-6 h-6 mb-1.5 transition-colors ${dragOverGallery ? 'text-primary' : 'text-neutral-400'}`} />
+                    <span className="text-[11px] font-semibold block text-center leading-none">
+                      Drag & Drop supporting photo or click to browse
+                    </span>
+                  </label>
                 </div>
 
-                {formSupportingImages.length > 0 ? (
+                {supportingFiles.length > 0 ? (
                   <div className="grid grid-cols-4 gap-4 pt-1">
-                    {formSupportingImages.map((img, idx) => (
-                      <div key={idx} className="relative aspect-[4/3] rounded-xl overflow-hidden border border-border bg-muted group">
+                    {supportingFiles.map((img) => (
+                      <div key={img.id} className="relative aspect-[4/3] rounded-xl overflow-hidden border border-border bg-muted group">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={img} alt={`Gallery ${idx}`} className="object-cover w-full h-full" />
+                        <img src={img.url} alt="Gallery item" className="object-cover w-full h-full" />
                         <button
                           type="button"
-                          onClick={() => removeSupportingImage(idx)}
+                          onClick={() => removeSupportingFile(img.id)}
                           className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 cursor-pointer shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X size={10} />
@@ -814,62 +922,210 @@ export default function ProductsPage() {
                 <span>Nested Recommendations (Associated Accessories)</span>
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+                {/* Recommended Tools */}
+                <div className="space-y-3 relative">
                   <h4 className="font-semibold text-neutral-800 flex items-center gap-1.5">
                     <LinkIcon size={12} className="text-primary" />
-                    <span>Recommended Tools</span>
+                    <span>Recommended Tools & Pots</span>
                   </h4>
-                  <div className="bg-muted/30 border border-border/60 p-4 rounded-2xl space-y-2 max-h-48 overflow-y-auto">
-                    {availableTools.map(tool => (
-                      <label key={tool.id} className="flex items-center gap-2.5 py-1 text-xs cursor-pointer select-none">
+                  <div className="relative">
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Search size={14} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
                         <input
-                          type="checkbox"
-                          checked={nestedTools.includes(tool.id)}
-                          onChange={() => toggleToolRecommendation(tool.id)}
-                          className="accent-primary w-4 h-4 rounded border-border cursor-pointer"
+                          type="text"
+                          placeholder="Search tools & pots to add..."
+                          value={toolSearch}
+                          onChange={(e) => {
+                            setToolSearch(e.target.value)
+                            setToolDropdownOpen(true)
+                          }}
+                          onFocus={() => setToolDropdownOpen(true)}
+                          className="w-full bg-white border border-border/80 pl-9 pr-4 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
                         />
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 border border-border rounded overflow-hidden relative inline-block shrink-0 bg-muted">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={tool.image} alt={tool.name} className="object-cover w-full h-full" />
-                          </span>
-                          <div>
-                            <span className="font-medium text-neutral-700 block">{tool.name}</span>
-                            <span className="text-[10px] text-neutral-400 block font-light">₹{tool.price}</span>
+                      </div>
+                      {toolSearch && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setToolSearch('')
+                            setToolDropdownOpen(false)
+                          }}
+                          className="px-2.5 text-xs text-neutral-500 hover:text-neutral-700 font-bold"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    {toolDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-1.5 bg-white border border-border/80 rounded-2xl shadow-xl max-h-48 overflow-y-auto p-1.5 space-y-0.5">
+                        {availableTools
+                          .filter(t => t.name.toLowerCase().includes(toolSearch.toLowerCase()) && !nestedTools.includes(t.id))
+                          .map(tool => (
+                            <button
+                              type="button"
+                              key={tool.id}
+                              onClick={() => {
+                                setNestedTools([...nestedTools, tool.id])
+                                setToolSearch('')
+                                setToolDropdownOpen(false)
+                              }}
+                              className="w-full text-left flex items-center gap-3 p-2 hover:bg-muted/60 rounded-xl transition-all"
+                            >
+                              <span className="w-8 h-8 border border-border rounded-lg overflow-hidden relative inline-block shrink-0 bg-muted">
+                                <img src={tool.image} alt={tool.name} className="object-cover w-full h-full" />
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <span className="font-semibold text-neutral-800 text-xs block truncate">{tool.name}</span>
+                                <span className="text-[10px] text-neutral-400 block">₹{tool.price} • {tool.category}</span>
+                              </div>
+                            </button>
+                          ))}
+                        {availableTools.filter(t => t.name.toLowerCase().includes(toolSearch.toLowerCase()) && !nestedTools.includes(t.id)).length === 0 && (
+                          <p className="text-[10px] text-neutral-400 p-3 italic text-center">No available tools found</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Click outside to close helper overlay */}
+                  {toolDropdownOpen && (
+                    <div className="fixed inset-0 z-40" onClick={() => setToolDropdownOpen(false)} />
+                  )}
+
+                  {/* Selected Tools List */}
+                  <div className="bg-muted/30 border border-border/60 p-4 rounded-2xl space-y-2 max-h-48 overflow-y-auto z-10 relative">
+                    {nestedTools.length > 0 ? (
+                      products
+                        .filter(p => nestedTools.includes(p.id))
+                        .map(tool => (
+                          <div key={tool.id} className="flex items-center justify-between bg-white border border-border/40 p-2.5 rounded-xl">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span className="w-7 h-7 border border-border rounded-lg overflow-hidden relative inline-block shrink-0 bg-muted">
+                                <img src={tool.image} alt={tool.name} className="object-cover w-full h-full" />
+                              </span>
+                              <div className="min-w-0">
+                                <span className="font-semibold text-neutral-700 text-xs block truncate">{tool.name}</span>
+                                <span className="text-[10px] text-neutral-400 block">₹{tool.price}</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setNestedTools(nestedTools.filter(x => x !== tool.id))}
+                              className="text-red-500 hover:text-red-700 p-1 font-bold text-xs"
+                            >
+                              ✕
+                            </button>
                           </div>
-                        </div>
-                      </label>
-                    ))}
+                        ))
+                    ) : (
+                      <p className="text-[10px] text-neutral-400 italic font-light">No tools recommended yet.</p>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                {/* Recommended Medicines */}
+                <div className="space-y-3 relative">
                   <h4 className="font-semibold text-neutral-800 flex items-center gap-1.5">
                     <LinkIcon size={12} className="text-primary" />
-                    <span>Recommended Medicines</span>
+                    <span>Recommended Medicines & Fertilizers</span>
                   </h4>
-                  <div className="bg-muted/30 border border-border/60 p-4 rounded-2xl space-y-2 max-h-48 overflow-y-auto">
-                    {availableMedicines.map(med => (
-                      <label key={med.id} className="flex items-center gap-2.5 py-1 text-xs cursor-pointer select-none">
+                  <div className="relative">
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Search size={14} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
                         <input
-                          type="checkbox"
-                          checked={nestedMedicines.includes(med.id)}
-                          onChange={() => toggleMedicineRecommendation(med.id)}
-                          className="accent-primary w-4 h-4 rounded border-border cursor-pointer"
+                          type="text"
+                          placeholder="Search medicines & fertilizers..."
+                          value={medSearch}
+                          onChange={(e) => {
+                            setMedSearch(e.target.value)
+                            setMedDropdownOpen(true)
+                          }}
+                          onFocus={() => setMedDropdownOpen(true)}
+                          className="w-full bg-white border border-border/80 pl-9 pr-4 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
                         />
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 border border-border rounded overflow-hidden relative inline-block shrink-0 bg-muted">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={med.image} alt={med.name} className="object-cover w-full h-full" />
-                          </span>
-                          <div>
-                            <span className="font-medium text-neutral-700 block">{med.name}</span>
-                            <span className="text-[10px] text-neutral-400 block font-light">₹{med.price}</span>
+                      </div>
+                      {medSearch && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMedSearch('')
+                            setMedDropdownOpen(false)
+                          }}
+                          className="px-2.5 text-xs text-neutral-500 hover:text-neutral-700 font-bold"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    {medDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-1.5 bg-white border border-border/80 rounded-2xl shadow-xl max-h-48 overflow-y-auto p-1.5 space-y-0.5">
+                        {availableMedicines
+                          .filter(m => m.name.toLowerCase().includes(medSearch.toLowerCase()) && !nestedMedicines.includes(m.id))
+                          .map(med => (
+                            <button
+                              type="button"
+                              key={med.id}
+                              onClick={() => {
+                                setNestedMedicines([...nestedMedicines, med.id])
+                                setMedSearch('')
+                                setMedDropdownOpen(false)
+                              }}
+                              className="w-full text-left flex items-center gap-3 p-2 hover:bg-muted/60 rounded-xl transition-all"
+                            >
+                              <span className="w-8 h-8 border border-border rounded-lg overflow-hidden relative inline-block shrink-0 bg-muted">
+                                <img src={med.image} alt={med.name} className="object-cover w-full h-full" />
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <span className="font-semibold text-neutral-800 text-xs block truncate">{med.name}</span>
+                                <span className="text-[10px] text-neutral-400 block">₹{med.price} • {med.category}</span>
+                              </div>
+                            </button>
+                          ))}
+                        {availableMedicines.filter(m => m.name.toLowerCase().includes(medSearch.toLowerCase()) && !nestedMedicines.includes(m.id)).length === 0 && (
+                          <p className="text-[10px] text-neutral-400 p-3 italic text-center">No available medicines found</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Click outside to close helper overlay */}
+                  {medDropdownOpen && (
+                    <div className="fixed inset-0 z-40" onClick={() => setMedDropdownOpen(false)} />
+                  )}
+
+                  {/* Selected Medicines List */}
+                  <div className="bg-muted/30 border border-border/60 p-4 rounded-2xl space-y-2 max-h-48 overflow-y-auto z-10 relative">
+                    {nestedMedicines.length > 0 ? (
+                      products
+                        .filter(p => nestedMedicines.includes(p.id))
+                        .map(med => (
+                          <div key={med.id} className="flex items-center justify-between bg-white border border-border/40 p-2.5 rounded-xl">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span className="w-7 h-7 border border-border rounded-lg overflow-hidden relative inline-block shrink-0 bg-muted">
+                                <img src={med.image} alt={med.name} className="object-cover w-full h-full" />
+                              </span>
+                              <div className="min-w-0">
+                                <span className="font-semibold text-neutral-700 text-xs block truncate">{med.name}</span>
+                                <span className="text-[10px] text-neutral-400 block">₹{med.price}</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setNestedMedicines(nestedMedicines.filter(x => x !== med.id))}
+                              className="text-red-500 hover:text-red-700 p-1 font-bold text-xs"
+                            >
+                              ✕
+                            </button>
                           </div>
-                        </div>
-                      </label>
-                    ))}
+                        ))
+                    ) : (
+                      <p className="text-[10px] text-neutral-400 italic font-light">No medicines recommended yet.</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -890,10 +1146,15 @@ export default function ProductsPage() {
             <button
               type="submit"
               form="product-form"
-              className="bg-primary hover:bg-primary-emerald text-white px-7 py-3 rounded-full font-bold text-xs cursor-pointer shadow-md transition-all flex items-center gap-1"
+              disabled={uploading}
+              className="bg-primary hover:bg-primary-emerald disabled:bg-primary/60 text-white px-7 py-3 rounded-full font-bold text-xs cursor-pointer shadow-md transition-all flex items-center gap-1.5"
             >
-              <Check size={14} />
-              <span>Save Specimen Details</span>
+              {uploading ? (
+                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Check size={14} />
+              )}
+              <span>{uploading ? 'Uploading & Saving...' : 'Save Specimen Details'}</span>
             </button>
           </SheetFooter>
         </SheetContent>

@@ -10,21 +10,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 1. DROP EXISTING CONSTRAINTS / TABLES (For clean replay)
 -- ==========================================
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_user();
 
-DROP TRIGGER IF EXISTS update_orders_updated_at ON public.orders;
-DROP TRIGGER IF EXISTS update_products_updated_at ON public.products;
-DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
-DROP TRIGGER IF EXISTS update_banners_updated_at ON public.banners;
-DROP FUNCTION IF EXISTS public.update_updated_at_column();
-
-DROP TRIGGER IF EXISTS trg_order_items_insert ON public.order_items;
-DROP TRIGGER IF EXISTS trg_order_items_delete ON public.order_items;
-DROP TRIGGER IF EXISTS trg_orders_status_change ON public.orders;
-DROP FUNCTION IF EXISTS public.handle_order_item_insert();
-DROP FUNCTION IF EXISTS public.handle_order_item_delete();
-DROP FUNCTION IF EXISTS public.handle_order_status_change();
-
+-- Drop tables first with CASCADE (this automatically drops all attached triggers & policies)
 DROP TABLE IF EXISTS public.wishlist CASCADE;
 DROP TABLE IF EXISTS public.subscribers CASCADE;
 DROP TABLE IF EXISTS public.banners CASCADE;
@@ -34,6 +21,15 @@ DROP TABLE IF EXISTS public.orders CASCADE;
 DROP TABLE IF EXISTS public.product_recommendations CASCADE;
 DROP TABLE IF EXISTS public.products CASCADE;
 DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- Drop functions cleanly
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS public.update_updated_at_column() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_order_item_insert() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_order_item_delete() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_order_status_change() CASCADE;
+DROP FUNCTION IF EXISTS public.is_admin() CASCADE;
+
 
 -- ==========================================
 -- 2. CREATE SCHEMAS & TABLES
@@ -427,3 +423,5 @@ CREATE POLICY "Admins have full access to subscribers" ON public.subscribers FOR
 -- I. Wishlist Policies
 CREATE POLICY "Users can manage own wishlist" ON public.wishlist FOR ALL USING (auth.uid() = profile_id);
 CREATE POLICY "Admins have full access to wishlist" ON public.wishlist FOR ALL TO authenticated USING (public.is_admin());
+
+

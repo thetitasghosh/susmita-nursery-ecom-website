@@ -24,10 +24,19 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+import { getAccountAction, signoutAction } from '@/server/auth'
+
 interface SidebarItem {
   name: string
   href: string
   icon: React.ComponentType<{ className?: string; size?: number | string }>
+}
+
+interface AdminUserInfo {
+  name: string
+  role: string
+  email: string
+  initial: string
 }
 
 const sidebarItems: SidebarItem[] = [
@@ -78,6 +87,12 @@ export default function DashboardLayout({
   
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [adminUser, setAdminUser] = useState<AdminUserInfo>({
+    name: 'Administrator',
+    role: 'Super Admin',
+    email: 'admin@susmitanursery.com',
+    initial: 'A',
+  })
   const isLoginPage = pathname === '/dashboard/login'
 
   // Header Search functionality states
@@ -85,16 +100,56 @@ export default function DashboardLayout({
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const searchContainerRef = useRef<HTMLDivElement>(null)
 
-  // Run client-side check for auth token
+  // Run client-side check for auth token & Supabase session
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const isAuth = sessionStorage.getItem('nursery_admin_auth') === 'true'
-      setIsAuthenticated(isAuth)
+    let isMounted = true
+    async function verifyAuth() {
+      if (isLoginPage) {
+        if (isMounted) setIsAuthenticated(false)
+        return
+      }
 
-      if (!isAuth && !isLoginPage) {
-        router.push('/dashboard/login')
+      try {
+        const res = await getAccountAction()
+        if (res.success && res.user) {
+          const profile = res.profile as Record<string, string> | null
+          
+          if (profile?.role !== 'admin') {
+            if (isMounted) {
+              setIsAuthenticated(false)
+            }
+            router.push('/')
+            return
+          }
+
+          const user = res.user as Record<string, string> | null
+          const email = user?.email || ''
+          const name = profile?.full_name || email.split('@')[0] || 'Admin'
+          const role = 'Super Admin'
+          const initial = name.charAt(0).toUpperCase()
+          if (isMounted) {
+            setAdminUser({ name, role, email, initial })
+            setIsAuthenticated(true)
+          }
+          return
+        }
+      } catch {
+        // Fallback
+      }
+
+      if (typeof window !== 'undefined') {
+        const isAuth = sessionStorage.getItem('nursery_admin_auth') === 'true'
+        if (isAuth) {
+          if (isMounted) setIsAuthenticated(true)
+        } else if (!isLoginPage) {
+          if (isMounted) setIsAuthenticated(false)
+          router.push('/dashboard/login')
+        }
       }
     }
+
+    verifyAuth()
+    return () => { isMounted = false }
   }, [pathname, isLoginPage, router])
 
   // Click outside to dismiss global search dropdown
@@ -108,12 +163,17 @@ export default function DashboardLayout({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await signoutAction()
+    } catch {
+      // Signout error
+    }
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('nursery_admin_auth')
-      setIsAuthenticated(false)
-      router.push('/dashboard/login')
     }
+    setIsAuthenticated(false)
+    router.push('/dashboard/login')
   }
 
   // Filter global search database based on typed query
@@ -280,18 +340,18 @@ export default function DashboardLayout({
                 className="w-9 h-9 bg-secondary/20 border border-secondary/40 text-secondary rounded-full flex items-center justify-center font-bold text-sm shrink-0 select-none hover:bg-red-600/20 hover:border-red-600/40 hover:text-red-500 transition-colors"
                 title="Sign Out"
               >
-                Y
+                {adminUser.initial}
               </button>
             ) : (
               <div className="w-9 h-9 bg-secondary/20 border border-secondary/40 text-secondary rounded-full flex items-center justify-center font-bold text-sm shrink-0 select-none">
-                Y
+                {adminUser.initial}
               </div>
             )}
             {!isSidebarCollapsed && (
               <div className="flex items-center justify-between flex-1 min-w-0">
                 <div className="truncate pr-2">
-                  <p className="text-xs font-semibold leading-tight text-white truncate">Yuvraj</p>
-                  <p className="text-[10px] text-neutral-500 font-light truncate">Super Admin</p>
+                  <p className="text-xs font-semibold leading-tight text-white truncate">{adminUser.name}</p>
+                  <p className="text-[10px] text-neutral-500 font-light truncate">{adminUser.role}</p>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -378,11 +438,11 @@ export default function DashboardLayout({
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-secondary/20 border border-secondary/40 text-secondary rounded-full flex items-center justify-center font-bold text-sm">
-                  Y
+                  {adminUser.initial}
                 </div>
                 <div>
-                  <p className="text-xs font-semibold leading-tight text-white">Yuvraj</p>
-                  <p className="text-[10px] text-neutral-500 font-light">Super Admin</p>
+                  <p className="text-xs font-semibold leading-tight text-white">{adminUser.name}</p>
+                  <p className="text-[10px] text-neutral-500 font-light">{adminUser.role}</p>
                 </div>
               </div>
               <button
@@ -575,9 +635,9 @@ export default function DashboardLayout({
                 className="w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center font-bold text-xs select-none hover:bg-red-600 transition-colors"
                 title="Sign Out"
               >
-                Y
+                {adminUser.initial}
               </button>
-              <span className="hidden sm:inline-block text-xs font-semibold font-sans text-neutral-800">Yuvraj</span>
+              <span className="hidden sm:inline-block text-xs font-semibold font-sans text-neutral-800">{adminUser.name}</span>
             </div>
           </div>
         </header>
