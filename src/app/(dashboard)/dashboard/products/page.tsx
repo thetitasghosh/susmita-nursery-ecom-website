@@ -1055,6 +1055,7 @@ export default function ProductsPage() {
                               className="w-full text-left flex items-center gap-3 p-2 hover:bg-muted/60 rounded-xl transition-all"
                             >
                               <span className="w-8 h-8 border border-border rounded-lg overflow-hidden relative inline-block shrink-0 bg-muted">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={tool.image} alt={tool.name} className="object-cover w-full h-full" />
                               </span>
                               <div className="flex-1 min-w-0">
@@ -1084,6 +1085,7 @@ export default function ProductsPage() {
                           <div key={tool.id} className="flex items-center justify-between bg-white border border-border/40 p-2.5 rounded-xl">
                             <div className="flex items-center gap-3 min-w-0">
                               <span className="w-7 h-7 border border-border rounded-lg overflow-hidden relative inline-block shrink-0 bg-muted">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={tool.image} alt={tool.name} className="object-cover w-full h-full" />
                               </span>
                               <div className="min-w-0">
@@ -1158,6 +1160,7 @@ export default function ProductsPage() {
                               className="w-full text-left flex items-center gap-3 p-2 hover:bg-muted/60 rounded-xl transition-all"
                             >
                               <span className="w-8 h-8 border border-border rounded-lg overflow-hidden relative inline-block shrink-0 bg-muted">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={med.image} alt={med.name} className="object-cover w-full h-full" />
                               </span>
                               <div className="flex-1 min-w-0">
@@ -1187,6 +1190,7 @@ export default function ProductsPage() {
                           <div key={med.id} className="flex items-center justify-between bg-white border border-border/40 p-2.5 rounded-xl">
                             <div className="flex items-center gap-3 min-w-0">
                               <span className="w-7 h-7 border border-border rounded-lg overflow-hidden relative inline-block shrink-0 bg-muted">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={med.image} alt={med.name} className="object-cover w-full h-full" />
                               </span>
                               <div className="min-w-0">

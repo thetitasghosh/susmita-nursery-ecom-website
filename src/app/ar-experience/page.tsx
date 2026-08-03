@@ -25,7 +25,6 @@ export default function ARExperiencePage() {
   const { addToCart, toggleWishlist, isWishlisted } = useShop();
   const [selectedPlantIndex, setSelectedPlantIndex] = useState(0);
   const [dbProducts, setDbProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadProducts() {
@@ -39,8 +38,6 @@ export default function ARExperiencePage() {
       } catch (err) {
         console.error('Failed to load AR products:', err);
         setDbProducts(allProducts);
-      } finally {
-        setLoading(false);
       }
     }
     loadProducts();

@@ -51,13 +51,13 @@ interface Customer {
   orderHistory: CustomerOrder[]
 }
 
-function formatDbProfile(p: Record<string, any>, index: number): Customer {
+function formatDbProfile(p: Record<string, unknown>, index: number): Customer {
   const fullName = (p.full_name as string) || 'Registered User'
   const email = (p.email as string) || (fullName !== 'Registered User' ? `${fullName.toLowerCase().replace(/\s+/g, '.')}@gmail.com` : 'user@example.com')
   const phone = (p.phone as string) || '+91 98765 43210'
   const joinedDate = p.joined_date ? new Date(p.joined_date as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Jan 15, 2026'
 
-  const dbOrders = (p.orders as any[]) || []
+  const dbOrders = (p.orders as Array<{ id: string | number; created_at: string; amount: string | number; order_status: string }>) || []
   
   // Calculate LTV
   const totalSpent = dbOrders
@@ -65,14 +65,14 @@ function formatDbProfile(p: Record<string, any>, index: number): Customer {
     .reduce((sum, o) => sum + Number(o.amount), 0)
 
   const orderHistory = dbOrders.map(o => ({
-    id: o.id,
+    id: String(o.id),
     date: new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     amount: Number(o.amount),
     status: o.order_status
   }))
 
   return {
-    id: p.id || index + 1,
+    id: (p.id as string | number) || index + 1,
     name: fullName,
     email,
     phone,

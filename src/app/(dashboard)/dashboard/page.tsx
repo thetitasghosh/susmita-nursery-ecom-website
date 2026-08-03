@@ -185,7 +185,7 @@ export default function OverviewPage() {
             orders.forEach(o => {
               const oDate = new Date(o.created_at as string)
               if (oDate.getMonth() === mIdx && oDate.getFullYear() === yIdx) {
-                const lineItems = (o.order_items as any[]) || []
+                const lineItems = (o.order_items as Array<{ products?: { category?: string | null } | null; price?: string | number | null; quantity?: string | number | null }>) || []
                 lineItems.forEach(item => {
                   const category = item.products?.category || ''
                   const isPlant = ['Indoor Plants', 'Outdoor Plants', 'Flower Plants', 'Fruit Plants', 'Lucky Bamboo'].includes(category)
@@ -230,7 +230,7 @@ export default function OverviewPage() {
             orders.forEach(o => {
               const oDate = new Date(o.created_at as string)
               if (oDate >= startOfWeek && oDate < endOfWeek) {
-                const lineItems = (o.order_items as any[]) || []
+                const lineItems = (o.order_items as Array<{ products?: { category?: string | null } | null; price?: string | number | null; quantity?: string | number | null }>) || []
                 lineItems.forEach(item => {
                   const category = item.products?.category || ''
                   const isPlant = ['Indoor Plants', 'Outdoor Plants', 'Flower Plants', 'Fruit Plants', 'Lucky Bamboo'].includes(category)
@@ -278,14 +278,14 @@ export default function OverviewPage() {
 
         // 1. Orders
         if (ordRes.success && ordRes.data && Array.isArray(ordRes.data)) {
-          const orders = ordRes.data as Array<Record<string, any>>
+          const orders = ordRes.data as Array<{ id: string | number; created_at?: string | null; order_status?: string | null; customer_name?: string | null; amount?: number | string | null }>
           orders.slice(0, 3).forEach((o) => {
             const timeStr = o.created_at ? new Date(o.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Recently'
             const dateStr = o.created_at ? new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Today'
             compiledActivities.push({
               id: `order-${o.id}`,
-              title: `Order #${(o.id as string).toString().slice(-5).toUpperCase()} ${o.order_status}`,
-              desc: `Customer ${o.customer_name} reserved plants worth ₹${Number(o.amount).toFixed(2)}.`,
+              title: `Order #${(o.id).toString().slice(-5).toUpperCase()} ${o.order_status ?? ''}`,
+              desc: `Customer ${o.customer_name ?? ''} reserved plants worth ₹${Number(o.amount ?? 0).toFixed(2)}.`,
               time: `${dateStr} at ${timeStr}`,
               color: 'bg-secondary'
             })
@@ -294,9 +294,9 @@ export default function OverviewPage() {
 
         // 2. Low Stock Alerts
         if (prodRes.success && prodRes.data && Array.isArray(prodRes.data)) {
-          const prods = prodRes.data as Array<Record<string, any>>
+          const prods = prodRes.data as Array<{ id: string | number; name: string; stock_quantity?: number | null }>
           const lowStock = prods.filter((p) => {
-            const stock = p.stock_quantity !== undefined ? p.stock_quantity : 10
+            const stock = p.stock_quantity !== undefined && p.stock_quantity !== null ? p.stock_quantity : 10
             return stock <= 5
           })
           lowStock.slice(0, 2).forEach((p) => {
@@ -312,7 +312,7 @@ export default function OverviewPage() {
 
         // 3. New Registrations
         if (userRes.success && userRes.data && Array.isArray(userRes.data)) {
-          const users = userRes.data as Array<Record<string, any>>
+          const users = userRes.data as Array<{ id: string | number; joined_date?: string | null; full_name?: string | null }>
           users.slice(0, 2).forEach((u) => {
             const joinedStr = u.joined_date ? new Date(u.joined_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Jan 15'
             compiledActivities.push({
