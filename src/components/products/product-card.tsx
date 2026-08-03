@@ -1,5 +1,6 @@
 'use client'
 
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Heart, ShoppingCart, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,8 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { addToCart, toggleWishlist, isWishlisted } = useShop()
   const wishlisted = isWishlisted(product.id)
+
+  const [isAdding, setIsAdding] = useState(false)
 
   return (
     <Link href={`/products/${product.slug || product.id}`}>
@@ -93,15 +96,25 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
             <Button
               size="sm"
-              className="bg-primary-emerald hover:bg-primary-emerald/90 text-white font-medium rounded-full px-4 py-1.5 text-xs cursor-pointer flex items-center gap-1.5 transition-all shadow-sm"
-              onClick={(e) => {
+              disabled={isAdding}
+              className="bg-primary-emerald hover:bg-primary-emerald/90 text-white font-medium rounded-full px-4 py-1.5 text-xs cursor-pointer flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-75"
+              onClick={async (e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                addToCart(product, 1)
+                setIsAdding(true)
+                try {
+                  await addToCart(product, 1)
+                } finally {
+                  setIsAdding(false)
+                }
               }}
             >
-              <ShoppingCart size={12} />
-              <span>Add</span>
+              {isAdding ? (
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <ShoppingCart size={12} />
+              )}
+              <span>{isAdding ? 'Adding' : 'Add'}</span>
             </Button>
           </div>
         </div>

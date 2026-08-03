@@ -4,6 +4,14 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Product } from './products'
 import { getAccountAction, signoutAction } from '@/server/auth'
 import { toggleWishlistAction, syncWishlistAction } from '@/server/wishlist'
+import {
+  getCartAction,
+  addToCartAction,
+  removeFromCartAction,
+  updateCartQuantityAction,
+  clearCartAction,
+  syncCartAction,
+} from '@/server/cart'
 
 export interface CartItem {
   product: Product
@@ -89,19 +97,11 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Load cart, wishlist, and session on mount (hydration safe)
+  // Load wishlist and session on mount (hydration safe)
   useEffect(() => {
     setIsMounted(true)
-    const storedCart = localStorage.getItem('susmita_nursery_cart')
     const storedWishlist = localStorage.getItem('susmita_nursery_wishlist')
 
-    if (storedCart) {
-      try {
-        setCart(JSON.parse(storedCart))
-      } catch (e) {
-        console.error('Failed to parse cart data', e)
-      }
-    }
     if (storedWishlist) {
       try {
         setWishlist(JSON.parse(storedWishlist))
@@ -113,12 +113,80 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     refreshSession()
   }, [])
 
-  // Save cart to localStorage
+  // Load/Sync cart based on auth state
   useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('susmita_nursery_cart', JSON.stringify(cart))
+    if (!isMounted || isLoadingUser) return
+
+    const loadAndSyncCart = async () => {
+      if (user) {
+        // Logged in: first collect any guest items in local storage
+        const guestCartKeys = ['susmita_nursery_cart_guest', 'susmita_nursery_cart']
+        let guestCart: CartItem[] = []
+
+        for (const key of guestCartKeys) {
+          const storedGuestCart = localStorage.getItem(key)
+          if (storedGuestCart) {
+            try {
+              const items: CartItem[] = JSON.parse(storedGuestCart)
+              if (items.length > 0) {
+                guestCart = [...guestCart, ...items]
+              }
+            } catch (e) {
+              console.error(`Failed to parse guest cart from key ${key} for merging`, e)
+            }
+            localStorage.removeItem(key)
+          }
+        }
+
+        if (guestCart.length > 0) {
+          // Sync guest items to database
+          const localPayload = guestCart.map(item => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+            selectedSize: item.selectedSize
+          }))
+          const syncRes = await syncCartAction(localPayload)
+          if (syncRes.success && syncRes.data) {
+            setCart(syncRes.data)
+            return
+          }
+        }
+
+        // Otherwise, just fetch the user's database cart
+        const cartRes = await getCartAction()
+        if (cartRes.success && cartRes.data) {
+          setCart(cartRes.data)
+        }
+      } else {
+        // Guest: load from local storage guest key (with legacy fallback)
+        const userCartKey = 'susmita_nursery_cart_guest'
+        let storedUserCart = localStorage.getItem(userCartKey)
+
+        if (!storedUserCart) {
+          storedUserCart = localStorage.getItem('susmita_nursery_cart')
+        }
+
+        let userCart: CartItem[] = []
+        if (storedUserCart) {
+          try {
+            userCart = JSON.parse(storedUserCart)
+          } catch (e) {
+            console.error('Failed to parse user cart data', e)
+          }
+        }
+        setCart(userCart)
+      }
     }
-  }, [cart, isMounted])
+
+    loadAndSyncCart()
+  }, [user, isLoadingUser, isMounted])
+
+  // Save guest cart to localStorage
+  useEffect(() => {
+    if (isMounted && !isLoadingUser && !user) {
+      localStorage.setItem('susmita_nursery_cart_guest', JSON.stringify(cart))
+    }
+  }, [cart, user, isLoadingUser, isMounted])
 
   // Save wishlist to localStorage
   useEffect(() => {
@@ -139,54 +207,102 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }
 
-  const addToCart = (product: Product, quantity = 1, size?: string) => {
+  const addToCart = async (product: Product, quantity = 1, size?: string) => {
     const chosenSize = size || product.sizes[0] || 'Standard'
     
-    setCart((prevCart) => {
-      const existingIndex = prevCart.findIndex(
-        (item) => item.product.id === product.id && item.selectedSize === chosenSize
-      )
-
-      if (existingIndex > -1) {
-        const updatedCart = [...prevCart]
-        updatedCart[existingIndex].quantity += quantity
-        addToast(`Increased ${product.name} (${chosenSize}) quantity to ${updatedCart[existingIndex].quantity}.`, 'success')
-        return updatedCart
-      } else {
-        addToast(`Added ${product.name} (${chosenSize}) to cart!`, 'success')
-        return [...prevCart, { product, quantity, selectedSize: chosenSize }]
+    if (user) {
+      try {
+        const res = await addToCartAction(product.id, quantity, chosenSize)
+        if (res.success && res.data) {
+          setCart(res.data)
+          addToast(`Added/Updated ${product.name} (${chosenSize}) in your database cart!`, 'success')
+        }
+      } catch (err) {
+        console.error('Failed to add to database cart:', err)
+        addToast('Failed to add to database cart.', 'error')
       }
-    })
+    } else {
+      setCart((prevCart) => {
+        const existingIndex = prevCart.findIndex(
+          (item) => item.product.id === product.id && item.selectedSize === chosenSize
+        )
+
+        if (existingIndex > -1) {
+          const updatedCart = [...prevCart]
+          updatedCart[existingIndex].quantity += quantity
+          addToast(`Increased ${product.name} (${chosenSize}) quantity to ${updatedCart[existingIndex].quantity}.`, 'success')
+          return updatedCart
+        } else {
+          addToast(`Added ${product.name} (${chosenSize}) to cart!`, 'success')
+          return [...prevCart, { product, quantity, selectedSize: chosenSize }]
+        }
+      })
+    }
   }
 
-  const removeFromCart = (productId: string, selectedSize: string) => {
-    setCart((prevCart) => {
-      const item = prevCart.find((i) => i.product.id === productId && i.selectedSize === selectedSize)
-      if (item) {
-        addToast(`Removed ${item.product.name} (${selectedSize}) from cart.`, 'info')
+  const removeFromCart = async (productId: string, selectedSize: string) => {
+    if (user) {
+      try {
+        const res = await removeFromCartAction(productId, selectedSize)
+        if (res.success && res.data) {
+          setCart(res.data)
+          addToast(`Removed item from database cart.`, 'info')
+        }
+      } catch (err) {
+        console.error('Failed to remove from database cart:', err)
       }
-      return prevCart.filter((i) => !(i.product.id === productId && i.selectedSize === selectedSize))
-    })
+    } else {
+      setCart((prevCart) => {
+        const item = prevCart.find((i) => i.product.id === productId && i.selectedSize === selectedSize)
+        if (item) {
+          addToast(`Removed ${item.product.name} (${selectedSize}) from cart.`, 'info')
+        }
+        return prevCart.filter((i) => !(i.product.id === productId && i.selectedSize === selectedSize))
+      })
+    }
   }
 
-  const updateCartQuantity = (productId: string, selectedSize: string, quantity: number) => {
+  const updateCartQuantity = async (productId: string, selectedSize: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(productId, selectedSize)
       return
     }
 
-    setCart((prevCart) =>
-      prevCart.map((item) =>
-        item.product.id === productId && item.selectedSize === selectedSize
-          ? { ...item, quantity }
-          : item
+    if (user) {
+      try {
+        const res = await updateCartQuantityAction(productId, selectedSize, quantity)
+        if (res.success && res.data) {
+          setCart(res.data)
+        }
+      } catch (err) {
+        console.error('Failed to update database cart quantity:', err)
+      }
+    } else {
+      setCart((prevCart) =>
+        prevCart.map((item) =>
+          item.product.id === productId && item.selectedSize === selectedSize
+            ? { ...item, quantity }
+            : item
+        )
       )
-    )
+    }
   }
 
-  const clearCart = () => {
-    setCart([])
-    addToast('Cleared shopping cart.', 'info')
+  const clearCart = async () => {
+    if (user) {
+      try {
+        const res = await clearCartAction()
+        if (res.success && res.data) {
+          setCart(res.data)
+          addToast('Cleared database shopping cart.', 'info')
+        }
+      } catch (err) {
+        console.error('Failed to clear database cart:', err)
+      }
+    } else {
+      setCart([])
+      addToast('Cleared shopping cart.', 'info')
+    }
   }
 
   const toggleWishlist = async (productId: string) => {
