@@ -33,11 +33,14 @@ export async function getCartAction(): Promise<CartResponse> {
       return { success: false, error: error.message }
     }
 
-    const cartItems: CartItem[] = (data || []).map((item: any) => ({
-      product: item.product as Product,
-      quantity: item.quantity,
-      selectedSize: item.selected_size,
-    })).filter(item => item.product !== null)
+    const cartItems: CartItem[] = (data || []).map((item) => {
+      const typedItem = item as { quantity: number; selected_size: string; product: unknown }
+      return {
+        product: typedItem.product as Product,
+        quantity: typedItem.quantity,
+        selectedSize: typedItem.selected_size,
+      }
+    }).filter(item => item.product !== null)
 
     return { success: true, data: cartItems }
   } catch (err: unknown) {
