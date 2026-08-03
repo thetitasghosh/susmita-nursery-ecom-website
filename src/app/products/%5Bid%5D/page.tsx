@@ -6,19 +6,21 @@ import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { Star, Heart, ShoppingCart, ShieldCheck, HeartHandshake, Truck, BookOpen, Download } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { allProducts } from '@/lib/products'
+import { allProducts, Product } from '@/lib/products'
 import { useShop } from '@/lib/shop-context'
 import Image from 'next/image'
 import { WHATSAPP_NUMBER } from '@/constants'
 import { PlantCareSuggestions } from '@/components/products/plant-care-suggestions'
+import { getProductsAction } from '@/server/product'
+import { useEffect } from 'react'
 
-const cultivarAliases: Record<number, string> = {
-  1: 'Swiss Cheese Plant',
-  2: 'Madonna Lily',
-  13: 'Golden Cane Palm',
-  14: 'Fiddle Leaf Fig',
-  15: 'Siam Aurora',
-  16: "Mother-in-Law's Tongue",
+const cultivarAliases: Record<string, string> = {
+  '00000000-0000-0000-0000-000000000006': 'Swiss Cheese Plant',
+  '00000000-0000-0000-0000-000000000007': 'Madonna Lily',
+  '00000000-0000-0000-0000-000000000018': 'Golden Cane Palm',
+  '00000000-0000-0000-0000-000000000019': 'Fiddle Leaf Fig',
+  '00000000-0000-0000-0000-000000000020': 'Siam Aurora',
+  '00000000-0000-0000-0000-000000000021': "Mother-in-Law's Tongue",
 }
 
 export default function ProductDetailPage({
@@ -26,16 +28,60 @@ export default function ProductDetailPage({
 }: {
   params: { id: string }
 }) {
-  const productId = parseInt(params.id)
-  const product = allProducts.find(p => p.id === productId) || allProducts[0]
-  
   const { addToCart, toggleWishlist, isWishlisted } = useShop()
   const [quantity, setQuantity] = useState(1)
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0] || 'Standard')
+  const [product, setProduct] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [selectedSize, setSelectedSize] = useState('Standard')
   const [activeCareStage, setActiveCareStage] = useState(0)
   const [isGeneratingGuide, setIsGeneratingGuide] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string>('')
 
-  const pageUrl = typeof window !== 'undefined' ? window.location.href : `https://susmitanursery.com/products/${product.id}`
+  useEffect(() => {
+    async function loadProduct() {
+      try {
+        const res = await getProductsAction();
+        if (res.success && res.data && Array.isArray(res.data)) {
+          const dbProducts = res.data as Product[];
+          const found = dbProducts.find(p => p.id === params.id || p.slug === params.id);
+          if (found) {
+            setProduct(found);
+            setSelectedSize(found.sizes[0] || 'Standard');
+            setSelectedImage(found.image);
+          } else {
+            // Fallback or not found
+            setProduct(null);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load product from database:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProduct();
+  }, [params.id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-serif font-bold text-red-800 mb-4">Product Not Found</h1>
+        <Button onClick={() => window.location.href = '/products'} className="rounded-full px-6">
+          Back to Catalog
+        </Button>
+      </div>
+    )
+  }
+
+  const pageUrl = typeof window !== 'undefined' ? window.location.href : `https://susmitanursery.com/products/${product.slug || product.id}`
   const scientific = product.scientificName ? ` (${product.scientificName})` : ''
   
   const whatsappMessage = `Hello Susmita Nursery! I want to discuss and buy this plant:
@@ -164,7 +210,7 @@ Product Link: ${pageUrl}`
       })
 
       // Dynamic QR Code Generation
-      const pageUrl = typeof window !== 'undefined' ? window.location.href : `https://susmitanursery.com/products/${product.id}`
+      const pageUrl = typeof window !== 'undefined' ? window.location.href : `https://susmitanursery.com/products/${product.slug || product.id}`
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pageUrl)}`
       const qrImg = new window.Image()
       qrImg.crossOrigin = 'Anonymous'
@@ -211,13 +257,7 @@ Product Link: ${pageUrl}`
     }
   }
 
-  const [selectedImage, setSelectedImage] = useState<string>(product.image)
   const galleryImages = product.images && product.images.length > 0 ? product.images : [product.image]
-
-  // Reset selected image when product changes
-  React.useEffect(() => {
-    setSelectedImage(product.image)
-  }, [product])
 
   const wishlisted = isWishlisted(product.id)
   const alias = cultivarAliases[product.id]
@@ -378,7 +418,7 @@ Product Link: ${pageUrl}`
 
                 {/* Marketing description */}
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed font-light border-t border-border/40 pt-4 font-sans">
-                  {product.id === 1 
+                  {product.id === '00000000-0000-0000-0000-000000000006' 
                     ? "A tropical beauty known for its iconic split leaves. Perfect for modern interiors and improves air quality."
                     : product.description}
                 </p>

@@ -27,7 +27,7 @@ export async function getOrdersAction(): Promise<OrderResponse> {
           quantity,
           price,
           size,
-          products ( name, image )
+          products ( name, image, category )
         )
       `)
       .order('created_at', { ascending: false })
@@ -84,11 +84,14 @@ export async function createOrderAction(orderInput: {
   address?: string
   amount: number
   notes?: string
-  items: Array<{ product_id: number; quantity: number; price: number; size: string }>
+  items: Array<{ product_id: string; quantity: number; price: number; size: string }>
 }): Promise<OrderResponse> {
   try {
     const cookieStore = await cookies()
     const supabase = createClient(cookieStore)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    const customerId = user ? user.id : null
 
     const orderId = orderInput.id || `SN-RES-${Math.floor(10000 + Math.random() * 90000)}`
 
@@ -98,6 +101,7 @@ export async function createOrderAction(orderInput: {
       .insert([
         {
           id: orderId,
+          customer_id: customerId,
           customer_name: orderInput.customer_name,
           phone: orderInput.phone,
           email: orderInput.email || null,

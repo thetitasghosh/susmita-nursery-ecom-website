@@ -47,7 +47,7 @@ import {
 type EnrichedProduct = Product & {
   slug?: string
   supportingImages?: string[]
-  nestedItemIds?: number[]
+  nestedItemIds?: string[]
   stock_quantity?: number
   reserved_quantity?: number
 }
@@ -70,6 +70,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<EnrichedProduct[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
+  const [loading, setLoading] = useState(true)
   
   // Image Uploading State & Function
   const [uploading, setUploading] = useState(false)
@@ -158,15 +159,17 @@ export default function ProductsPage() {
   const [newCareInst, setNewCareInst] = useState('')
 
   // Nested Tools & Medicines Recommendation IDs
-  const [nestedTools, setNestedTools] = useState<number[]>([])
-  const [nestedMedicines, setNestedMedicines] = useState<number[]>([])
+  const [nestedTools, setNestedTools] = useState<string[]>([])
+  const [nestedMedicines, setNestedMedicines] = useState<string[]>([])
 
   // Load products from Supabase database with fallback to local definitions
   const loadProducts = async () => {
+    setLoading(true)
     try {
       const res = await getProductsAction()
       if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
         setProducts(res.data as EnrichedProduct[])
+        setLoading(false)
         return
       }
     } catch {
@@ -179,6 +182,7 @@ export default function ProductsPage() {
         const parsed = JSON.parse(stored)
         if (parsed.length > 0) {
           setProducts(parsed)
+          setLoading(false)
           return
         }
       } catch {
@@ -192,9 +196,10 @@ export default function ProductsPage() {
         '/images/plants/succulent-collection.jpg',
         '/images/plants/aglaonema-red.jpg'
       ],
-      nestedItemIds: p.category === 'Gardening Tools' || p.category === 'Plants Medicine' || p.category === 'Organic Fertilizer' ? [] : [17, 19]
+      nestedItemIds: p.category === 'Gardening Tools' || p.category === 'Plants Medicine' || p.category === 'Organic Fertilizer' ? [] : ['00000000-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000019']
     }))
     setProducts(enriched)
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -269,8 +274,8 @@ export default function ProductsPage() {
     setFormCareInstructions(product.careInstructions || [])
 
     const nested = product.nestedItemIds || []
-    setNestedTools(nested.filter((id: number) => availableTools.some(t => t.id === id)))
-    setNestedMedicines(nested.filter((id: number) => availableMedicines.some(m => m.id === id)))
+    setNestedTools(nested.filter((id: string) => availableTools.some(t => t.id === id)))
+    setNestedMedicines(nested.filter((id: string) => availableMedicines.some(m => m.id === id)))
     setToolSearch('')
     setMedSearch('')
     setToolDropdownOpen(false)
@@ -279,7 +284,35 @@ export default function ProductsPage() {
     setIsSheetOpen(true)
   }
 
-  const handleDelete = async (id: number) => {
+  const handleToggleFeatured = async (id: string) => {
+    const targetProduct = products.find(p => p.id === id)
+    if (!targetProduct) return
+
+    const isFeatured = !targetProduct.featured
+    if (isFeatured) {
+      const currentlyFeaturedCount = products.filter(p => p.featured).length
+      if (currentlyFeaturedCount >= 5) {
+        alert('You can only have up to 5 featured products at a time. Please unfeature another product first.')
+        return
+      }
+    }
+
+    const updated = products.map(p => p.id === id ? { ...p, featured: isFeatured } : p)
+    setProducts(updated)
+    localStorage.setItem('nursery_products', JSON.stringify(updated))
+
+    try {
+      const res = await updateProductAction(id, { featured: isFeatured })
+      if (!res.success) {
+        setProducts(products)
+        alert(res.error || 'Failed to update featured status.')
+      }
+    } catch {
+      setProducts(products)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
       await deleteProductAction(id)
       const updated = products.filter(p => p.id !== id)
@@ -320,7 +353,7 @@ export default function ProductsPage() {
         }
       }
 
-      const productPayload: Partial<Product> & { nestedItemIds?: number[] } = {
+      const productPayload: Partial<Product> & { nestedItemIds?: string[] } = {
         name: formName,
         slug: formSlug,
         category: formCategory,
@@ -479,20 +512,59 @@ export default function ProductsPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30">
-              <TableHead className="py-4 px-6 font-semibold w-16">ID</TableHead>
+              <TableHead className="py-4 px-6 font-semibold w-40">Slug</TableHead>
               <TableHead className="py-4 px-4 font-semibold">Specimen</TableHead>
               <TableHead className="py-4 px-4 font-semibold">Category</TableHead>
               <TableHead className="py-4 px-4 font-semibold">Price</TableHead>
               <TableHead className="py-4 px-4 font-semibold">Rating / Reviews</TableHead>
               <TableHead className="py-4 px-4 font-semibold">Specs (Light/Water)</TableHead>
+              <TableHead className="py-4 px-4 font-semibold text-center w-24">Featured</TableHead>
               <TableHead className="py-4 px-6 text-right font-semibold">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProducts.length > 0 ? (
+            {loading ? (
+              Array.from({ length: 5 }).map((_, idx) => (
+                <TableRow key={idx} className="animate-pulse">
+                  <TableCell className="py-6 px-6"><div className="h-4 bg-muted rounded-full w-8" /></TableCell>
+                  <TableCell className="py-6 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-muted shrink-0" />
+                      <div className="space-y-2 w-full">
+                        <div className="h-4 bg-muted rounded-full w-32" />
+                        <div className="h-3 bg-muted rounded-full w-24" />
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-20" /></TableCell>
+                  <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-12" /></TableCell>
+                  <TableCell className="py-6 px-4">
+                    <div className="space-y-1.5">
+                      <div className="h-3.5 bg-muted rounded-full w-16" />
+                      <div className="h-3 bg-muted rounded-full w-10" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-6 px-4">
+                    <div className="space-y-1.5">
+                      <div className="h-3.5 bg-muted rounded-full w-24" />
+                      <div className="h-3 bg-muted rounded-full w-16" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-6 px-4">
+                    <div className="h-4 bg-muted rounded-full w-8 mx-auto" />
+                  </TableCell>
+                  <TableCell className="py-6 px-6 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-muted" />
+                      <div className="w-8 h-8 rounded-lg bg-muted" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : filteredProducts.length > 0 ? (
               filteredProducts.map((product) => (
                 <TableRow key={product.id}>
-                  <TableCell className="py-4 px-6 font-bold text-neutral-400">{product.id}</TableCell>
+                  <TableCell className="py-4 px-6 text-neutral-400 font-mono text-[10px] break-all max-w-[140px]">{product.slug || product.id}</TableCell>
                   <TableCell className="py-4 px-4 font-medium text-neutral-800">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl overflow-hidden border border-border relative shrink-0 bg-muted">
@@ -531,6 +603,14 @@ export default function ProductsPage() {
                       <p><span className="font-semibold">Water:</span> {product.details?.water || 'N/A'}</p>
                     </div>
                   </TableCell>
+                  <TableCell className="py-4 px-4 text-center">
+                    <input
+                      type="checkbox"
+                      checked={!!product.featured}
+                      onChange={() => handleToggleFeatured(product.id)}
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer mx-auto"
+                    />
+                  </TableCell>
                   <TableCell className="py-4 px-6 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
@@ -553,7 +633,7 @@ export default function ProductsPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground font-light">
+                <TableCell colSpan={8} className="py-12 text-center text-muted-foreground font-light">
                   No products found matching your search.
                 </TableCell>
               </TableRow>

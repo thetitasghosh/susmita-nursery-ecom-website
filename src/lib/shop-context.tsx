@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Product } from './products'
 import { getAccountAction, signoutAction } from '@/server/auth'
+import { toggleWishlistAction, syncWishlistAction } from '@/server/wishlist'
 
 export interface CartItem {
   product: Product
@@ -18,14 +19,14 @@ interface ToastMessage {
 
 interface ShopContextType {
   cart: CartItem[]
-  wishlist: number[] // Product IDs
+  wishlist: string[] // Product IDs
   toasts: ToastMessage[]
   addToCart: (product: Product, quantity?: number, size?: string) => void
-  removeFromCart: (productId: number, selectedSize: string) => void
-  updateCartQuantity: (productId: number, selectedSize: string, quantity: number) => void
+  removeFromCart: (productId: string, selectedSize: string) => void
+  updateCartQuantity: (productId: string, selectedSize: string, quantity: number) => void
   clearCart: () => void
-  toggleWishlist: (productId: number) => void
-  isWishlisted: (productId: number) => boolean
+  toggleWishlist: (productId: string) => void
+  isWishlisted: (productId: string) => boolean
   addToast: (message: string, type?: 'success' | 'info' | 'error') => void
   removeToast: (id: string) => void
   cartCount: number
@@ -46,7 +47,7 @@ const ShopContext = createContext<ShopContextType | undefined>(undefined)
 
 export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([])
-  const [wishlist, setWishlist] = useState<number[]>([])
+  const [wishlist, setWishlist] = useState<string[]>([])
   const [toasts, setToasts] = useState<ToastMessage[]>([])
   const [isMounted, setIsMounted] = useState(false)
 
@@ -63,6 +64,20 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       if (res.success && res.user) {
         setUser(res.user)
         setProfile(res.profile || null)
+
+        // Sync local guest wishlist to DB
+        const localWishlistStr = localStorage.getItem('susmita_nursery_wishlist')
+        let localIds: string[] = []
+        if (localWishlistStr) {
+          try {
+            localIds = JSON.parse(localWishlistStr)
+          } catch {}
+        }
+
+        const wlRes = await syncWishlistAction(localIds)
+        if (wlRes.success && wlRes.data) {
+          setWishlist(wlRes.data)
+        }
       } else {
         setUser(null)
         setProfile(null)
@@ -144,7 +159,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  const removeFromCart = (productId: number, selectedSize: string) => {
+  const removeFromCart = (productId: string, selectedSize: string) => {
     setCart((prevCart) => {
       const item = prevCart.find((i) => i.product.id === productId && i.selectedSize === selectedSize)
       if (item) {
@@ -154,7 +169,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  const updateCartQuantity = (productId: number, selectedSize: string, quantity: number) => {
+  const updateCartQuantity = (productId: string, selectedSize: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(productId, selectedSize)
       return
@@ -174,7 +189,8 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     addToast('Cleared shopping cart.', 'info')
   }
 
-  const toggleWishlist = (productId: number) => {
+  const toggleWishlist = async (productId: string) => {
+    // Optimistic Update
     setWishlist((prevWishlist) => {
       const isAlreadyWishlisted = prevWishlist.includes(productId)
       if (isAlreadyWishlisted) {
@@ -185,9 +201,20 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         return [...prevWishlist, productId]
       }
     })
+
+    if (user) {
+      try {
+        const res = await toggleWishlistAction(productId)
+        if (res.success && res.data) {
+          setWishlist(res.data)
+        }
+      } catch (err) {
+        console.error('Failed to update database wishlist:', err)
+      }
+    }
   }
 
-  const isWishlisted = (productId: number) => {
+  const isWishlisted = (productId: string) => {
     return wishlist.includes(productId)
   }
 

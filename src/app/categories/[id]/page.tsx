@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { ProductCard } from '@/components/products/product-card'
 import { ChevronDown, ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { allProducts } from '@/lib/products'
+import { allProducts, Product } from '@/lib/products'
+import { getProductsAction } from '@/server/product'
 
 const categoryIdToName: Record<number, { name: string; description: string }> = {
   1: { name: 'Indoor Plants', description: 'Breathe life into your rooms and office spaces' },
@@ -28,8 +29,30 @@ export default function CategoryDetailPage({ params }: { params: { id: string } 
   const categoryId = parseInt(params.id)
   const catInfo = categoryIdToName[categoryId] || categoryIdToName[1]
   const [sortBy, setSortBy] = useState('featured')
+  const [dbProducts, setDbProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const categoryProducts = allProducts.filter((product) => product.category === catInfo.name)
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const res = await getProductsAction()
+        if (res.success && res.data && Array.isArray(res.data)) {
+          setDbProducts(res.data as Product[])
+        } else {
+          setDbProducts(allProducts)
+        }
+      } catch (err) {
+        console.error('Failed to load products:', err)
+        setDbProducts(allProducts)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProducts()
+  }, [])
+
+  const listToUse = dbProducts.length > 0 ? dbProducts : (loading ? [] : allProducts)
+  const categoryProducts = listToUse.filter((product) => product.category === catInfo.name)
 
   const sortedProducts = [...categoryProducts].sort((a, b) => {
     if (sortBy === 'price-low') return a.price - b.price
@@ -102,19 +125,23 @@ export default function CategoryDetailPage({ params }: { params: { id: string } 
 
           {/* Products Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {sortedProducts.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
+            {loading
+              ? Array.from({ length: 3 }).map((_, idx) => (
+                  <div key={idx} className="h-[400px] bg-muted/60 animate-pulse rounded-3xl border border-border/40" />
+                ))
+              : sortedProducts.map((product, index) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
           </div>
 
-          {sortedProducts.length === 0 && (
+          {!loading && sortedProducts.length === 0 && (
             <div className="text-center py-16 bg-card border border-border/80 rounded-3xl">
               <p className="text-muted-foreground font-light text-sm">No plant specimens are currently available under this category.</p>
             </div>

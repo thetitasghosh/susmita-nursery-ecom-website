@@ -17,7 +17,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const wishlisted = isWishlisted(product.id)
 
   return (
-    <Link href={`/products/${product.id}`}>
+    <Link href={`/products/${product.slug || product.id}`}>
       <motion.div
         whileHover={{ y: -4 }}
         className="group h-full bg-card border border-border/80 rounded-3xl overflow-hidden hover:border-primary/30 transition-all duration-300 cursor-pointer flex flex-col justify-between"

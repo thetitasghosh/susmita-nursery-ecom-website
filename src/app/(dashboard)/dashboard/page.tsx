@@ -22,26 +22,26 @@ import { getUsersAction } from '@/server/user'
 const initialStats = [
   {
     title: 'Total Revenue',
-    value: '₹48,250.00',
-    change: '+14.2%',
+    value: '₹0.00',
+    change: '0%',
     isPositive: true,
-    subtitle: 'vs. ₹42,240 last month',
+    subtitle: 'Total reservation value',
     icon: TrendingUp,
     color: 'text-primary bg-primary/10',
   },
   {
     title: 'Active Orders',
-    value: '18 Orders',
-    change: '+8.3%',
+    value: '0 Orders',
+    change: '0%',
     isPositive: true,
-    subtitle: '6 pending shipment',
+    subtitle: 'Awaiting pickup',
     icon: ShoppingBag,
     color: 'text-secondary bg-secondary/10',
   },
   {
     title: 'Low Stock Items',
-    value: '4 Products',
-    change: '-25%',
+    value: '0 Products',
+    change: '0%',
     isPositive: true,
     subtitle: 'Items below threshold (5)',
     icon: AlertTriangle,
@@ -49,10 +49,10 @@ const initialStats = [
   },
   {
     title: 'Subscribers',
-    value: '1,428 Subscribers',
-    change: '+6.1%',
+    value: '0 Users',
+    change: '0%',
     isPositive: true,
-    subtitle: '12 new this week',
+    subtitle: 'Registered accounts',
     icon: Users,
     color: 'text-primary-deep bg-primary-deep/10',
   },
@@ -100,6 +100,15 @@ export default function OverviewPage() {
   const [stats, setStats] = useState(initialStats)
   const [recentOrders, setRecentOrders] = useState(initialRecentOrders)
   const [lowStockItems, setLowStockItems] = useState(initialLowStockItems)
+  const [monthlyData, setMonthlyData] = useState(monthlyChartData)
+  const [weeklyData, setWeeklyData] = useState(weeklyChartData)
+  const [activities, setActivities] = useState<Array<{
+    id: string
+    title: string
+    desc: string
+    time: string
+    color: string
+  }>>([])
 
   useEffect(() => {
     async function loadDashboardMetrics() {
@@ -134,7 +143,7 @@ export default function OverviewPage() {
           }))
         }
 
-        if (ordRes.success && ordRes.data && Array.isArray(ordRes.data) && ordRes.data.length > 0) {
+        if (ordRes.success && ordRes.data && Array.isArray(ordRes.data)) {
           const orders = ordRes.data as Array<Record<string, unknown>>
           const activeCount = orders.filter((o) => o.order_status === 'processing' || o.order_status === 'ready_for_pickup').length
           const totalRev = orders.reduce((acc: number, o) => acc + Number(o.amount || 0), 0)
@@ -157,6 +166,101 @@ export default function OverviewPage() {
             status: o.payment_status === 'paid' ? 'paid' : o.order_status === 'cancelled' ? 'failed' : 'pending',
             statusColor: o.payment_status === 'paid' ? 'text-secondary bg-secondary/15 border-secondary/30' : o.order_status === 'cancelled' ? 'text-red-600 bg-red-50 border-red-200' : 'text-accent-earth bg-accent/15 border-accent/30'
           })))
+
+          // 1. Monthly Performance Chart calculation
+          const now = new Date()
+          const currentMonthIdx = now.getMonth()
+          const currentYear = now.getFullYear()
+
+          const computedMonthly = Array.from({ length: 7 }).map((_, index) => {
+            // 7 months leading to current month (e.g. if current is Aug, months are Feb to Aug)
+            const targetMonthDate = new Date(currentYear, currentMonthIdx - 6 + index, 1)
+            const mIdx = targetMonthDate.getMonth()
+            const yIdx = targetMonthDate.getFullYear()
+            const label = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][mIdx]
+            
+            let plantsSum = 0
+            let toolsSum = 0
+
+            orders.forEach(o => {
+              const oDate = new Date(o.created_at as string)
+              if (oDate.getMonth() === mIdx && oDate.getFullYear() === yIdx) {
+                const lineItems = (o.order_items as any[]) || []
+                lineItems.forEach(item => {
+                  const category = item.products?.category || ''
+                  const isPlant = ['Indoor Plants', 'Outdoor Plants', 'Flower Plants', 'Fruit Plants', 'Lucky Bamboo'].includes(category)
+                  const itemTotal = Number(item.price || 0) * Number(item.quantity || 1)
+                  if (isPlant) {
+                    plantsSum += itemTotal
+                  } else {
+                    toolsSum += itemTotal
+                  }
+                })
+              }
+            })
+
+            return {
+              month: label,
+              plants: plantsSum,
+              tools: toolsSum,
+              x: 25 + index * 75,
+              yPlants: 0,
+              yTools: 0
+            }
+          })
+
+          const maxMonthlyVal = Math.max(...computedMonthly.map(d => Math.max(d.plants, d.tools)), 1)
+          const finalMonthly = computedMonthly.map(d => ({
+            ...d,
+            yPlants: 190 - ((d.plants / maxMonthlyVal) * 170),
+            yTools: 190 - ((d.tools / maxMonthlyVal) * 170)
+          }))
+          setMonthlyData(finalMonthly)
+
+          // 2. Weekly Performance Chart calculation
+          const computedWeekly = Array.from({ length: 7 }).map((_, index) => {
+            const weekIdx = 6 - index
+            const label = `Week ${index + 1}`
+            let plantsSum = 0
+            let toolsSum = 0
+
+            const startOfWeek = new Date(now.getTime() - (weekIdx + 1) * 7 * 24 * 60 * 60 * 1000)
+            const endOfWeek = new Date(now.getTime() - weekIdx * 7 * 24 * 60 * 60 * 1000)
+
+            orders.forEach(o => {
+              const oDate = new Date(o.created_at as string)
+              if (oDate >= startOfWeek && oDate < endOfWeek) {
+                const lineItems = (o.order_items as any[]) || []
+                lineItems.forEach(item => {
+                  const category = item.products?.category || ''
+                  const isPlant = ['Indoor Plants', 'Outdoor Plants', 'Flower Plants', 'Fruit Plants', 'Lucky Bamboo'].includes(category)
+                  const itemTotal = Number(item.price || 0) * Number(item.quantity || 1)
+                  if (isPlant) {
+                    plantsSum += itemTotal
+                  } else {
+                    toolsSum += itemTotal
+                  }
+                })
+              }
+            })
+
+            return {
+              month: label,
+              plants: plantsSum,
+              tools: toolsSum,
+              x: 25 + index * 75,
+              yPlants: 0,
+              yTools: 0
+            }
+          })
+
+          const maxWeeklyVal = Math.max(...computedWeekly.map(d => Math.max(d.plants, d.tools)), 1)
+          const finalWeekly = computedWeekly.map(d => ({
+            ...d,
+            yPlants: 190 - ((d.plants / maxWeeklyVal) * 170),
+            yTools: 190 - ((d.tools / maxWeeklyVal) * 170)
+          }))
+          setWeeklyData(finalWeekly)
         }
 
         if (userRes.success && userRes.data && Array.isArray(userRes.data) && userRes.data.length > 0) {
@@ -168,6 +272,61 @@ export default function OverviewPage() {
             return s
           }))
         }
+
+        // Compile Dynamic Activities
+        const compiledActivities: Array<{ id: string; title: string; desc: string; time: string; color: string }> = []
+
+        // 1. Orders
+        if (ordRes.success && ordRes.data && Array.isArray(ordRes.data)) {
+          const orders = ordRes.data as Array<Record<string, any>>
+          orders.slice(0, 3).forEach((o) => {
+            const timeStr = o.created_at ? new Date(o.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Recently'
+            const dateStr = o.created_at ? new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Today'
+            compiledActivities.push({
+              id: `order-${o.id}`,
+              title: `Order #${(o.id as string).toString().slice(-5).toUpperCase()} ${o.order_status}`,
+              desc: `Customer ${o.customer_name} reserved plants worth ₹${Number(o.amount).toFixed(2)}.`,
+              time: `${dateStr} at ${timeStr}`,
+              color: 'bg-secondary'
+            })
+          })
+        }
+
+        // 2. Low Stock Alerts
+        if (prodRes.success && prodRes.data && Array.isArray(prodRes.data)) {
+          const prods = prodRes.data as Array<Record<string, any>>
+          const lowStock = prods.filter((p) => {
+            const stock = p.stock_quantity !== undefined ? p.stock_quantity : 10
+            return stock <= 5
+          })
+          lowStock.slice(0, 2).forEach((p) => {
+            compiledActivities.push({
+              id: `stock-${p.id}`,
+              title: `Low Stock Alert`,
+              desc: `${p.name} remaining stock is down to ${p.stock_quantity ?? 0} units.`,
+              time: 'System checked just now',
+              color: 'bg-accent-earth'
+            })
+          })
+        }
+
+        // 3. New Registrations
+        if (userRes.success && userRes.data && Array.isArray(userRes.data)) {
+          const users = userRes.data as Array<Record<string, any>>
+          users.slice(0, 2).forEach((u) => {
+            const joinedStr = u.joined_date ? new Date(u.joined_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Jan 15'
+            compiledActivities.push({
+              id: `user-${u.id}`,
+              title: `New User Joined`,
+              desc: `${u.full_name || 'Registered Customer'} joined the nursery floor.`,
+              time: `Registered on ${joinedStr}`,
+              color: 'bg-primary'
+            })
+          })
+        }
+
+        // Sort or slice and set state
+        setActivities(compiledActivities.slice(0, 5))
       } catch {
         // Keep initial fallback
       }
@@ -176,7 +335,7 @@ export default function OverviewPage() {
     loadDashboardMetrics()
   }, [])
 
-  const currentChartData = timeframe === 'monthly' ? monthlyChartData : weeklyChartData
+  const currentChartData = timeframe === 'monthly' ? monthlyData : weeklyData
   const activePoint = activePointIndex !== null ? currentChartData[activePointIndex] : null
 
   // Helper to compile SVG paths dynamically
@@ -525,19 +684,27 @@ export default function OverviewPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
-                  {recentOrders.map((order, idx) => (
-                    <tr key={idx} className="hover:bg-muted/10">
-                      <td className="py-3 font-bold text-primary">{order.id}</td>
-                      <td className="py-3 font-medium text-neutral-800">{order.name}</td>
-                      <td className="py-3 font-light text-neutral-400">{order.date}</td>
-                      <td className="py-3 font-bold text-neutral-800">{order.amount}</td>
-                      <td className="py-3 text-right">
-                        <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${order.statusColor}`}>
-                          {order.status}
-                        </span>
+                  {recentOrders.length > 0 ? (
+                    recentOrders.map((order, idx) => (
+                      <tr key={idx} className="hover:bg-muted/10">
+                        <td className="py-3 font-bold text-primary">{order.id}</td>
+                        <td className="py-3 font-medium text-neutral-800">{order.name}</td>
+                        <td className="py-3 font-light text-neutral-400">{order.date}</td>
+                        <td className="py-3 font-bold text-neutral-800">{order.amount}</td>
+                        <td className="py-3 text-right">
+                          <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${order.statusColor}`}>
+                            {order.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-neutral-400 text-xs font-light">
+                        No orders recorded in the database yet.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -557,33 +724,23 @@ export default function OverviewPage() {
             </div>
 
             <div className="relative border-l border-border pl-4 space-y-5 py-1">
-              <div className="relative text-xs space-y-1">
-                <span className="absolute -left-[21px] w-2.5 h-2.5 rounded-full bg-secondary border-2 border-white mt-0.5" />
-                <span className="font-semibold text-neutral-800">Order #4092 paid</span>
-                <span className="text-neutral-500 font-light block leading-normal">Customer Ananya Mitra checked out 1x Monstera.</span>
-                <span className="text-[10px] text-neutral-400 font-light block flex items-center gap-1">
-                  <Clock size={10} />
-                  <span>5 minutes ago</span>
-                </span>
-              </div>
-              <div className="relative text-xs space-y-1">
-                <span className="absolute -left-[21px] w-2.5 h-2.5 rounded-full bg-primary border-2 border-white mt-0.5" />
-                <span className="font-semibold text-neutral-800">Product List Sync</span>
-                <span className="text-neutral-500 font-light block leading-normal">Liquid Bio-Organic Fertilizer specs updated.</span>
-                <span className="text-[10px] text-neutral-400 font-light block flex items-center gap-1">
-                  <Clock size={10} />
-                  <span>1 hour ago</span>
-                </span>
-              </div>
-              <div className="relative text-xs space-y-1">
-                <span className="absolute -left-[21px] w-2.5 h-2.5 rounded-full bg-accent border-2 border-white mt-0.5" />
-                <span className="font-semibold text-neutral-800">Low Stock Alert</span>
-                <span className="text-neutral-500 font-light block leading-normal">Monstera Deliciosa hit inventory safety limit (2).</span>
-                <span className="text-[10px] text-neutral-400 font-light block flex items-center gap-1">
-                  <Clock size={10} />
-                  <span>2 hours ago</span>
-                </span>
-              </div>
+              {activities.length > 0 ? (
+                activities.map((act) => (
+                  <div key={act.id} className="relative text-xs space-y-1">
+                    <span className={`absolute -left-[21px] w-2.5 h-2.5 rounded-full ${act.color} border-2 border-white mt-0.5`} />
+                    <span className="font-semibold text-neutral-800">{act.title}</span>
+                    <span className="text-neutral-500 font-light block leading-normal">{act.desc}</span>
+                    <span className="text-[10px] text-neutral-400 font-light block flex items-center gap-1">
+                      <Clock size={10} />
+                      <span>{act.time}</span>
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-6 text-neutral-400 text-xs font-light">
+                  No recent activities recorded.
+                </div>
+              )}
             </div>
           </div>
         </div>

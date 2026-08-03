@@ -6,14 +6,34 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { allProducts, Product } from '@/lib/products'
 import { Leaf } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { getProductsAction } from '@/server/product'
 
 export function FeaturedProducts() {
-  // Top 5 Featured Plant Deck: Money Plant Yellow Slabs (1), Green Good Luck Plant (2), Philodendron Birkin (3), Shingonium Yammy Red (4), Lipstick Plant (5)
-  const featuredIds = [1, 2, 3, 4, 5]
-  
-  const featured = featuredIds
-    .map(id => allProducts.find(p => p.id === id))
-    .filter(Boolean) as Product[]
+  const [featured, setFeatured] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadFeatured() {
+      try {
+        const res = await getProductsAction();
+        if (res.success && res.data && Array.isArray(res.data)) {
+          const dbProducts = res.data as Product[];
+          const matches = dbProducts.filter(p => p.featured);
+          if (matches.length > 0) {
+            setFeatured(matches.slice(0, 5));
+          } else {
+            setFeatured(dbProducts.slice(0, 5));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load featured products:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadFeatured();
+  }, []);
 
   return (
     <section className="py-20 md:py-28 bg-muted/30 border-b border-border/40">
@@ -41,17 +61,21 @@ export function FeaturedProducts() {
 
         {/* Dynamic Bestsellers Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12">
-          {featured.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
-              className="h-full"
-            >
-              <ProductCard product={product} />
-            </motion.div>
-          ))}
+          {loading
+            ? Array.from({ length: 5 }).map((_, idx) => (
+                <div key={idx} className="h-[360px] bg-muted/60 animate-pulse rounded-3xl border border-border/40" />
+              ))
+            : featured.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 25 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.08 }}
+                  className="h-full"
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
         </div>
 
         {/* View All Action */}

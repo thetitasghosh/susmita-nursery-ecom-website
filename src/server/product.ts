@@ -42,9 +42,9 @@ export async function getProductsAction(): Promise<ProductResponse> {
       .from('product_recommendations')
       .select('product_id, recommended_id')
 
-    const recMap: Record<number, number[]> = {}
+    const recMap: Record<string, string[]> = {}
     if (dbRecommendations) {
-      dbRecommendations.forEach((r: { product_id: number; recommended_id: number }) => {
+      dbRecommendations.forEach((r: { product_id: string; recommended_id: string }) => {
         if (!recMap[r.product_id]) {
           recMap[r.product_id] = []
         }
@@ -54,7 +54,7 @@ export async function getProductsAction(): Promise<ProductResponse> {
 
     // Format DB products into Product interface shape
     const formatted = (dbProducts as Array<{
-      id: number
+      id: string
       name: string
       slug?: string
       category: string
@@ -74,6 +74,7 @@ export async function getProductsAction(): Promise<ProductResponse> {
       air_purifying?: string
       stock_quantity?: number
       reserved_quantity?: number
+      featured?: boolean
     }>).map((p) => ({
       id: p.id,
       name: p.name,
@@ -95,6 +96,7 @@ export async function getProductsAction(): Promise<ProductResponse> {
       airPurifying: p.air_purifying,
       stock_quantity: p.stock_quantity,
       reserved_quantity: p.reserved_quantity,
+      featured: p.featured,
       nestedItemIds: recMap[p.id] || []
     }))
 
@@ -108,7 +110,7 @@ export async function getProductsAction(): Promise<ProductResponse> {
  * Create a new product in Supabase database
  */
 export async function createProductAction(
-  productInput: Partial<Product> & { nestedItemIds?: number[] }
+  productInput: Partial<Product> & { nestedItemIds?: string[] }
 ): Promise<ProductResponse> {
   try {
     const cookieStore = await cookies()
@@ -135,6 +137,7 @@ export async function createProductAction(
       air_purifying: productInput.airPurifying || 'High',
       stock_quantity: 50,
       reserved_quantity: 0,
+      featured: productInput.featured || false,
     }
 
     const { data, error } = await supabase
@@ -172,8 +175,8 @@ export async function createProductAction(
  * Update an existing product in Supabase database
  */
 export async function updateProductAction(
-  id: number,
-  productInput: Partial<Product> & { stock_quantity?: number; reserved_quantity?: number; nestedItemIds?: number[] }
+  id: string,
+  productInput: Partial<Product> & { stock_quantity?: number; reserved_quantity?: number; nestedItemIds?: string[] }
 ): Promise<ProductResponse> {
   try {
     const cookieStore = await cookies()
@@ -200,6 +203,7 @@ export async function updateProductAction(
     if (productInput.airPurifying !== undefined) dbPayload.air_purifying = productInput.airPurifying
     if (productInput.stock_quantity !== undefined) dbPayload.stock_quantity = productInput.stock_quantity
     if (productInput.reserved_quantity !== undefined) dbPayload.reserved_quantity = productInput.reserved_quantity
+    if (productInput.featured !== undefined) dbPayload.featured = productInput.featured
 
     const { data, error } = await supabase
       .from('products')
@@ -243,7 +247,7 @@ export async function updateProductAction(
 /**
  * Delete a product from Supabase database
  */
-export async function deleteProductAction(id: number): Promise<ProductResponse> {
+export async function deleteProductAction(id: string): Promise<ProductResponse> {
   try {
     const cookieStore = await cookies()
     const supabase = createClient(cookieStore)

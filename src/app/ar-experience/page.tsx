@@ -19,10 +19,34 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { allProducts, Product } from "@/lib/products";
 import { useShop } from "@/lib/shop-context";
+import { getProductsAction } from "@/server/product";
 
 export default function ARExperiencePage() {
   const { addToCart, toggleWishlist, isWishlisted } = useShop();
   const [selectedPlantIndex, setSelectedPlantIndex] = useState(0);
+  const [dbProducts, setDbProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const res = await getProductsAction();
+        if (res.success && res.data && Array.isArray(res.data)) {
+          setDbProducts(res.data as Product[]);
+        } else {
+          setDbProducts(allProducts);
+        }
+      } catch (err) {
+        console.error('Failed to load AR products:', err);
+        setDbProducts(allProducts);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProducts();
+  }, []);
+
+  const listToUse = dbProducts.length > 0 ? dbProducts : allProducts;
 
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState("modern_loft");
@@ -41,8 +65,8 @@ export default function ARExperiencePage() {
   ]);
   const [newMessage, setNewMessage] = useState("");
 
-  const activePlant = allProducts[selectedPlantIndex] || allProducts[0];
-  const wishlisted = isWishlisted(activePlant.id);
+  const activePlant = listToUse[selectedPlantIndex] || listToUse[0];
+  const wishlisted = isWishlisted(activePlant?.id || '');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -153,8 +177,15 @@ export default function ARExperiencePage() {
   };
 
   // Filter 6 popular varieties for AR Upsell Trigger
-  const upsellPlants = allProducts.filter((p) =>
-    [1, 13, 14, 2, 16, 3].includes(p.id),
+  const upsellPlants = listToUse.filter((p) =>
+    [
+      '00000000-0000-0000-0000-000000000001',
+      '00000000-0000-0000-0000-000000000018',
+      '00000000-0000-0000-0000-000000000019',
+      '00000000-0000-0000-0000-000000000002',
+      '00000000-0000-0000-0000-000000000021',
+      '00000000-0000-0000-0000-000000000003'
+    ].includes(p.id),
   );
 
   // Raw GLB URL for testing AR (Khronos Diffuse Transmission Plant Asset)
@@ -589,13 +620,13 @@ export default function ARExperiencePage() {
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6">
               {upsellPlants.map((plant) => {
                 const isSelected =
-                  allProducts[selectedPlantIndex]?.id === plant.id;
+                  listToUse[selectedPlantIndex]?.id === plant.id;
                 return (
                   <motion.div
                     key={plant.id}
                     whileHover={{ y: -4 }}
                     onClick={() => {
-                      const actualIdx = allProducts.findIndex(
+                      const actualIdx = listToUse.findIndex(
                         (p) => p.id === plant.id,
                       );
                       if (actualIdx > -1) {

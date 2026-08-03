@@ -7,7 +7,7 @@ export interface ProductCare {
 }
 
 export interface Product {
-  id: number
+  id: string
   name: string
   slug?: string
   category: string
@@ -25,11 +25,12 @@ export interface Product {
   difficulty?: string
   petFriendly?: string
   airPurifying?: string
+  featured?: boolean
 }
 
 export const allProducts: Product[] = [
   {
-    id: 1,
+    id: '00000000-0000-0000-0000-000000000001',
     name: 'Money Plant Yellow Slabs',
     scientificName: 'Epipremnum aureum Yellow',
     category: 'Indoor Plants',
@@ -64,7 +65,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 2,
+    id: '00000000-0000-0000-0000-000000000002',
     name: 'Green Good Luck Plant',
     scientificName: 'Dracaena fragrans',
     category: 'Indoor Plants',
@@ -99,7 +100,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 3,
+    id: '00000000-0000-0000-0000-000000000003',
     name: 'Philodendron Birkin',
     scientificName: 'Philodendron birkin',
     category: 'Indoor Plants',
@@ -134,7 +135,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 4,
+    id: '00000000-0000-0000-0000-000000000004',
     name: 'Shingonium Yammy Red',
     scientificName: 'Syngonium podophyllum Yammy Red',
     category: 'Indoor Plants',
@@ -169,7 +170,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 5,
+    id: '00000000-0000-0000-0000-000000000005',
     name: 'Lipstick Plant',
     scientificName: 'Aeschynanthus radicans',
     category: 'Indoor Plants',
@@ -204,7 +205,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 6,
+    id: '00000000-0000-0000-0000-000000000006',
     name: 'Monstera Deliciosa',
     scientificName: 'Monstera deliciosa',
     category: 'Indoor Plants',
@@ -234,7 +235,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 2,
+    id: '00000000-0000-0000-0000-000000000007',
     name: 'Peace Lily',
     scientificName: 'Spathiphyllum',
     category: 'Indoor Plants',
@@ -263,7 +264,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 3,
+    id: '00000000-0000-0000-0000-000000000008',
     name: 'Pothos Hanging',
     scientificName: 'Epipremnum aureum',
     category: 'Indoor Plants',
@@ -292,7 +293,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 4,
+    id: '00000000-0000-0000-0000-000000000009',
     name: 'Succulent Collection',
     scientificName: 'Echeveria & Sedum Mix',
     category: 'Outdoor Plants',
@@ -321,7 +322,7 @@ export const allProducts: Product[] = [
     airPurifying: 'Moderate',
   },
   {
-    id: 5,
+    id: '00000000-0000-0000-0000-000000000010',
     name: 'Red Roses Bouquet',
     scientificName: 'Rosa rubiginosa',
     category: 'Flower Plants',
@@ -350,7 +351,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 6,
+    id: '00000000-0000-0000-0000-000000000011',
     name: 'Lavender Plant',
     scientificName: 'Lavandula angustifolia',
     category: 'Flower Plants',
@@ -379,7 +380,7 @@ export const allProducts: Product[] = [
     airPurifying: 'Low',
   },
   {
-    id: 7,
+    id: '00000000-0000-0000-0000-000000000012',
     name: 'Orchid Flower',
     scientificName: 'Phalaenopsis',
     category: 'Flower Plants',
@@ -408,7 +409,7 @@ export const allProducts: Product[] = [
     airPurifying: 'Moderate',
   },
   {
-    id: 8,
+    id: '00000000-0000-0000-0000-000000000013',
     name: 'Bonsai Tree',
     scientificName: 'Juniperus procumbens',
     category: 'Outdoor Plants',
@@ -437,7 +438,7 @@ export const allProducts: Product[] = [
     airPurifying: 'Low',
   },
   {
-    id: 9,
+    id: '00000000-0000-0000-0000-000000000014',
     name: 'Tulips Bouquet',
     scientificName: 'Tulipa',
     category: 'Flower Plants',
@@ -466,7 +467,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 10,
+    id: '00000000-0000-0000-0000-000000000015',
     name: 'Sunflower Garden',
     scientificName: 'Helianthus annuus',
     category: 'Flower Plants',
@@ -495,7 +496,7 @@ export const allProducts: Product[] = [
     airPurifying: 'Low',
   },
   {
-    id: 11,
+    id: '00000000-0000-0000-0000-000000000016',
     name: 'Dahlia Bouquet',
     scientificName: 'Dahlia pinnata',
     category: 'Flower Plants',
@@ -524,7 +525,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 12,
+    id: '00000000-0000-0000-0000-000000000017',
     name: 'Premium Orchid',
     scientificName: 'Cymbidium',
     category: 'Flower Plants',
@@ -553,7 +554,7 @@ export const allProducts: Product[] = [
     airPurifying: 'Moderate',
   },
   {
-    id: 13,
+    id: '00000000-0000-0000-0000-000000000018',
     name: 'Areca Palm',
     scientificName: 'Dypsis lutescens',
     category: 'Indoor Plants',
@@ -582,7 +583,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 14,
+    id: '00000000-0000-0000-0000-000000000019',
     name: 'Ficus Lyrata',
     scientificName: 'Ficus lyrata',
     category: 'Indoor Plants',
@@ -611,7 +612,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 15,
+    id: '00000000-0000-0000-0000-000000000020',
     name: 'Aglaonema Red',
     scientificName: 'Aglaonema Siam Aurora',
     category: 'Indoor Plants',
@@ -640,7 +641,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 16,
+    id: '00000000-0000-0000-0000-000000000021',
     name: 'Snake Plant',
     scientificName: 'Sansevieria trifasciata',
     category: 'Indoor Plants',
@@ -669,7 +670,7 @@ export const allProducts: Product[] = [
     airPurifying: 'High',
   },
   {
-    id: 17,
+    id: '00000000-0000-0000-0000-000000000022',
     name: 'Premium Pruning Shears',
     scientificName: 'Tools & Accessories',
     category: 'Gardening Tools',
@@ -698,7 +699,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 18,
+    id: '00000000-0000-0000-0000-000000000023',
     name: 'Brass Watering Can',
     scientificName: 'Tools & Accessories',
     category: 'Gardening Tools',
@@ -726,7 +727,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 19,
+    id: '00000000-0000-0000-0000-000000000024',
     name: 'Neem Oil Pest Spray',
     scientificName: 'Organic Plant Protection',
     category: 'Plants Medicine',
@@ -755,7 +756,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 20,
+    id: '00000000-0000-0000-0000-000000000025',
     name: 'Bio-Organic Fertilizer',
     scientificName: 'Organic Soil Nutrients',
     category: 'Organic Fertilizer',
@@ -784,7 +785,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 21,
+    id: '00000000-0000-0000-0000-000000000026',
     name: 'Lucky Bamboo Spiral',
     scientificName: 'Dracaena sanderiana',
     category: 'Lucky Bamboo',
@@ -813,7 +814,7 @@ export const allProducts: Product[] = [
     airPurifying: 'Moderate',
   },
   {
-    id: 22,
+    id: '00000000-0000-0000-0000-000000000027',
     name: 'Classic Terracotta Clay Pot',
     scientificName: 'Garden Accessory',
     category: 'No1. Clay Pots',
@@ -841,7 +842,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 23,
+    id: '00000000-0000-0000-0000-000000000028',
     name: 'Premium Fiber Planter',
     scientificName: 'Garden Accessory',
     category: 'No1. Fiber Pots',
@@ -869,7 +870,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 24,
+    id: '00000000-0000-0000-0000-000000000029',
     name: 'Glazed Ceramic Planter',
     scientificName: 'Garden Accessory',
     category: 'Ceramic Pots',
@@ -897,7 +898,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 25,
+    id: '00000000-0000-0000-0000-000000000030',
     name: 'Self-Watering Plastic Pot',
     scientificName: 'Garden Accessory',
     category: 'Plastic Pots',
@@ -925,7 +926,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 26,
+    id: '00000000-0000-0000-0000-000000000031',
     name: 'Sweet Mango Grafted Plant',
     scientificName: 'Mangifera indica',
     category: 'Fruit Plants',
@@ -954,7 +955,7 @@ export const allProducts: Product[] = [
     airPurifying: 'Low',
   },
   {
-    id: 27,
+    id: '00000000-0000-0000-0000-000000000032',
     name: 'Root Growth Enhancer & Bio-Fungicide',
     scientificName: 'Organic Root Care',
     category: 'Plants Medicine',
@@ -982,7 +983,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 28,
+    id: '00000000-0000-0000-0000-000000000033',
     name: 'Micro-Mist Foliage Sprayer',
     scientificName: 'Tools & Accessories',
     category: 'Gardening Tools',
@@ -1010,7 +1011,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 29,
+    id: '00000000-0000-0000-0000-000000000034',
     name: 'Organic Vermicompost Soil Booster',
     scientificName: 'Enriched Earth Nutrients',
     category: 'Organic Fertilizer',
@@ -1038,7 +1039,7 @@ export const allProducts: Product[] = [
     airPurifying: 'None',
   },
   {
-    id: 30,
+    id: '00000000-0000-0000-0000-000000000035',
     name: 'Precision Botanical Shears',
     scientificName: 'Tools & Accessories',
     category: 'Gardening Tools',

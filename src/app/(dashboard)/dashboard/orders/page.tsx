@@ -176,6 +176,7 @@ export default function OrdersPage() {
   const [selectedStatus, setSelectedStatus] = useState('All')
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (urlSearch !== null) {
@@ -185,11 +186,13 @@ export default function OrdersPage() {
 
   // Load from Supabase DB or localStorage fallback
   const loadOrders = async () => {
+    setLoading(true)
     try {
       const res = await getOrdersAction()
       if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
         const formatted = (res.data as Array<Record<string, unknown>>).map(formatDbOrder)
         setOrders(formatted)
+        setLoading(false)
         return
       }
     } catch {
@@ -200,12 +203,14 @@ export default function OrdersPage() {
     if (stored) {
       try {
         setOrders(JSON.parse(stored))
+        setLoading(false)
         return
       } catch {
         // Fallback
       }
     }
     setOrders(initialOrders)
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -339,7 +344,24 @@ export default function OrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredOrders.length > 0 ? (
+            {loading ? (
+              Array.from({ length: 4 }).map((_, idx) => (
+                <TableRow key={idx} className="animate-pulse">
+                  <TableCell className="py-6 px-6"><div className="h-4 bg-muted rounded-full w-24" /></TableCell>
+                  <TableCell className="py-6 px-4">
+                    <div className="space-y-1.5">
+                      <div className="h-4 bg-muted rounded-full w-28" />
+                      <div className="h-3.5 bg-muted rounded-full w-20" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-16" /></TableCell>
+                  <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-12" /></TableCell>
+                  <TableCell className="py-6 px-4"><div className="h-3.5 bg-muted rounded-full w-14" /></TableCell>
+                  <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-20" /></TableCell>
+                  <TableCell className="py-6 px-6 text-right"><div className="w-8 h-8 rounded-lg bg-muted ml-auto" /></TableCell>
+                </TableRow>
+              ))
+            ) : filteredOrders.length > 0 ? (
               filteredOrders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="py-4 px-6 font-bold text-primary font-mono text-xs">{order.id}</TableCell>

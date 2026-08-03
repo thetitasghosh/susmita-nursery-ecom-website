@@ -9,6 +9,7 @@ import {
   CheckCircle
 } from 'lucide-react'
 import { allProducts, Product } from '@/lib/products'
+import { getProductsAction } from '@/server/product'
 import {
   Table,
   TableHeader,
@@ -71,20 +72,35 @@ export default function NewsletterPage() {
     }
 
     // Load products list for dropdown
-    const storedProd = localStorage.getItem('nursery_products')
-    if (storedProd) {
+    async function loadProductsList() {
       try {
-        const parsed = JSON.parse(storedProd)
-        setProductList(parsed)
-        setFeaturedProduct(parsed[0] || null)
-      } catch {
-        setProductList(allProducts)
-        setFeaturedProduct(allProducts[0] || null)
+        const res = await getProductsAction()
+        if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+          setProductList(res.data as Product[])
+          setFeaturedProduct((res.data as Product[])[0] || null)
+          return
+        }
+      } catch (err) {
+        console.error('Failed to load products for newsletter:', err)
       }
-    } else {
+
+      // Fallback
+      const storedProd = localStorage.getItem('nursery_products')
+      if (storedProd) {
+        try {
+          const parsed = JSON.parse(storedProd)
+          setProductList(parsed)
+          setFeaturedProduct(parsed[0] || null)
+          return
+        } catch {
+          // ignore
+        }
+      }
       setProductList(allProducts)
       setFeaturedProduct(allProducts[0] || null)
     }
+
+    loadProductsList()
   }, [])
 
   // Toggle active
@@ -257,7 +273,7 @@ export default function NewsletterPage() {
                 <select
                   value={featuredProduct ? featuredProduct.id : ''}
                   onChange={(e) => {
-                    const match = productList.find(p => p.id === Number(e.target.value))
+                    const match = productList.find(p => p.id === e.target.value)
                     if (match) setFeaturedProduct(match)
                   }}
                   className="w-full bg-white border border-border/80 px-3 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs"

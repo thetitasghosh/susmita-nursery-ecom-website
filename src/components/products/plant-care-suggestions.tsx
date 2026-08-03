@@ -8,6 +8,8 @@ import { ShoppingCart, ArrowRight, ShieldAlert, Wrench, Sprout, Sparkles } from 
 import { Product, allProducts } from '@/lib/products'
 import { useShop } from '@/lib/shop-context'
 import { Button } from '@/components/ui/button'
+import { getProductsAction } from '@/server/product'
+import { useState, useEffect } from 'react'
 
 interface PlantCareSuggestionsProps {
   currentProduct: Product
@@ -15,14 +17,33 @@ interface PlantCareSuggestionsProps {
 
 export function PlantCareSuggestions({ currentProduct }: PlantCareSuggestionsProps) {
   const { addToCart } = useShop()
+  const [productsList, setProductsList] = useState<Product[]>([])
+
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const res = await getProductsAction()
+        if (res.success && res.data && Array.isArray(res.data)) {
+          setProductsList(res.data as Product[])
+        } else {
+          setProductsList(allProducts)
+        }
+      } catch (err) {
+        console.error('Failed to load products for care suggestions:', err)
+        setProductsList(allProducts)
+      }
+    }
+    loadProducts()
+  }, [])
 
   // Dynamic recommendation engine based on current product type
   const getDynamicRecommendations = () => {
+    const listToUse = productsList.length > 0 ? productsList : allProducts
     const isPlant = !['Gardening Tools', 'Plants Medicine', 'Organic Fertilizer', 'No1. Clay Pots', 'No1. Fiber Pots', 'Ceramic Pots', 'Plastic Pots'].includes(currentProduct.category)
 
     if (!isPlant) {
       // If viewing a tool/pot/medicine, recommend popular indoor & flowering plants + complementary tools
-      const plants = allProducts.filter(p => ['Indoor Plants', 'Flower Plants', 'Fruit Plants'].includes(p.category)).slice(0, 3)
+      const plants = listToUse.filter(p => ['Indoor Plants', 'Flower Plants', 'Fruit Plants'].includes(p.category)).slice(0, 3)
       return plants.map(p => ({
         product: p,
         tag: 'COMPANION PLANT',
@@ -32,7 +53,7 @@ export function PlantCareSuggestions({ currentProduct }: PlantCareSuggestionsPro
     }
 
     // 1. Pick Medicine
-    const medicines = allProducts.filter(p => p.category === 'Plants Medicine')
+    const medicines = listToUse.filter(p => p.category === 'Plants Medicine')
     let selectedMedicine = medicines[0]
     if (currentProduct.difficulty === 'Medium' || currentProduct.difficulty === 'Hard') {
       selectedMedicine = medicines.find(p => p.name.includes('Root Growth')) || medicines[0]
@@ -41,14 +62,14 @@ export function PlantCareSuggestions({ currentProduct }: PlantCareSuggestionsPro
     }
 
     // 2. Pick Fertilizer
-    const fertilizers = allProducts.filter(p => p.category === 'Organic Fertilizer')
+    const fertilizers = listToUse.filter(p => p.category === 'Organic Fertilizer')
     let selectedFertilizer = fertilizers[0]
     if (currentProduct.category === 'Fruit Plants' || currentProduct.category === 'Flower Plants') {
       selectedFertilizer = fertilizers.find(p => p.name.includes('Vermicompost')) || fertilizers[0]
     }
 
     // 3. Pick Tool
-    const tools = allProducts.filter(p => p.category === 'Gardening Tools')
+    const tools = listToUse.filter(p => p.category === 'Gardening Tools')
     let selectedTool = tools[0]
     if (currentProduct.details?.humidity?.toLowerCase().includes('high') || currentProduct.category === 'Indoor Plants') {
       selectedTool = tools.find(p => p.name.includes('Micro-Mist') || p.name.includes('Watering Can')) || tools[0]
@@ -57,7 +78,7 @@ export function PlantCareSuggestions({ currentProduct }: PlantCareSuggestionsPro
     }
 
     // 4. Pick Pot / Container
-    const pots = allProducts.filter(p => ['No1. Clay Pots', 'No1. Fiber Pots', 'Ceramic Pots', 'Plastic Pots'].includes(p.category))
+    const pots = listToUse.filter(p => ['No1. Clay Pots', 'No1. Fiber Pots', 'Ceramic Pots', 'Plastic Pots'].includes(p.category))
     let selectedPot = pots[0]
     if (currentProduct.category === 'Indoor Plants') {
       selectedPot = pots.find(p => p.category === 'Ceramic Pots' || p.category === 'No1. Fiber Pots') || pots[0]
@@ -135,7 +156,7 @@ export function PlantCareSuggestions({ currentProduct }: PlantCareSuggestionsPro
             </div>
 
             {/* Thumbnail Image */}
-            <Link href={`/products/${product.id}`} className="block relative aspect-square w-full bg-muted/20 rounded-2xl overflow-hidden mb-4 group-hover:scale-[1.02] transition-transform duration-300">
+            <Link href={`/products/${product.slug || product.id}`} className="block relative aspect-square w-full bg-muted/20 rounded-2xl overflow-hidden mb-4 group-hover:scale-[1.02] transition-transform duration-300">
               <Image
                 src={product.image}
                 alt={product.name}
@@ -147,7 +168,7 @@ export function PlantCareSuggestions({ currentProduct }: PlantCareSuggestionsPro
 
             {/* Title & Contextual Reason */}
             <div className="flex-1 space-y-1.5 mb-4">
-              <Link href={`/products/${product.id}`} className="font-serif font-bold text-foreground text-base hover:text-primary transition-colors line-clamp-1 block">
+              <Link href={`/products/${product.slug || product.id}`} className="font-serif font-bold text-foreground text-base hover:text-primary transition-colors line-clamp-1 block">
                 {product.name}
               </Link>
               <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
@@ -165,7 +186,7 @@ export function PlantCareSuggestions({ currentProduct }: PlantCareSuggestionsPro
                 <ShoppingCart size={13} />
                 <span>Add to Cart</span>
               </Button>
-              <Link href={`/products/${product.id}`}>
+              <Link href={`/products/${product.slug || product.id}`}>
                 <Button
                   size="sm"
                   variant="outline"

@@ -8,7 +8,8 @@ import { ProductCard } from '@/components/products/product-card'
 import { Button } from '@/components/ui/button'
 import { Search, Filter, ChevronDown } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { allProducts } from '@/lib/products'
+import { allProducts, Product } from '@/lib/products'
+import { getProductsAction } from '@/server/product'
 
 function ProductCatalog() {
   const searchParams = useSearchParams()
@@ -18,6 +19,27 @@ function ProductCatalog() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState('featured')
   const [searchTerm, setSearchTerm] = useState('')
+  const [dbProducts, setDbProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const res = await getProductsAction()
+        if (res.success && res.data && Array.isArray(res.data)) {
+          setDbProducts(res.data as Product[])
+        } else {
+          setDbProducts(allProducts)
+        }
+      } catch (err) {
+        console.error('Failed to load products:', err)
+        setDbProducts(allProducts)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProducts()
+  }, [])
 
   useEffect(() => {
     if (categoryParam) {
@@ -50,7 +72,9 @@ function ProductCatalog() {
     'Outdoor Plants'
   ]
 
-  const filteredProducts = allProducts.filter((product) => {
+  const listToUse = dbProducts.length > 0 ? dbProducts : (loading ? [] : allProducts)
+
+  const filteredProducts = listToUse.filter((product) => {
     const matchesCategory =
       !selectedCategory || product.category === selectedCategory
     const matchesSearch = product.name
@@ -174,19 +198,23 @@ function ProductCatalog() {
 
           {/* Products */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {sortedProducts.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.04 }}
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
+            {loading
+              ? Array.from({ length: 6 }).map((_, idx) => (
+                  <div key={idx} className="h-[400px] bg-muted/60 animate-pulse rounded-3xl border border-border/40" />
+                ))
+              : sortedProducts.map((product, index) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.04 }}
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
           </div>
 
-          {sortedProducts.length === 0 && (
+          {!loading && sortedProducts.length === 0 && (
             <div className="text-center py-16 bg-card border border-border/80 rounded-3xl">
               <p className="text-muted-foreground font-light mb-4 text-sm">No items match your filters.</p>
               <Button

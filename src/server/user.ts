@@ -20,7 +20,15 @@ export async function getUsersAction(): Promise<UserResponse> {
 
     const { data: profiles, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select(`
+        *,
+        orders (
+          id,
+          amount,
+          order_status,
+          created_at
+        )
+      `)
       .order('joined_date', { ascending: false })
 
     if (error) {

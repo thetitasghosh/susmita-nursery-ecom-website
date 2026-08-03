@@ -51,24 +51,35 @@ interface Customer {
   orderHistory: CustomerOrder[]
 }
 
-function formatDbProfile(p: Record<string, unknown>, index: number): Customer {
+function formatDbProfile(p: Record<string, any>, index: number): Customer {
   const fullName = (p.full_name as string) || 'Registered User'
   const email = (p.email as string) || (fullName !== 'Registered User' ? `${fullName.toLowerCase().replace(/\s+/g, '.')}@gmail.com` : 'user@example.com')
   const phone = (p.phone as string) || '+91 98765 43210'
   const joinedDate = p.joined_date ? new Date(p.joined_date as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Jan 15, 2026'
 
+  const dbOrders = (p.orders as any[]) || []
+  
+  // Calculate LTV
+  const totalSpent = dbOrders
+    .filter(o => o.order_status !== 'cancelled')
+    .reduce((sum, o) => sum + Number(o.amount), 0)
+
+  const orderHistory = dbOrders.map(o => ({
+    id: o.id,
+    date: new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    amount: Number(o.amount),
+    status: o.order_status
+  }))
+
   return {
-    id: (p.id as string) || index + 1,
+    id: p.id || index + 1,
     name: fullName,
     email,
     phone,
     joinedDate,
-    totalOrders: (p.total_orders as number) || 2,
-    totalSpent: (p.total_spent as number) || 2450.00,
-    orderHistory: (p.order_history as CustomerOrder[]) || [
-      { id: 'OR-4092', date: 'Jul 17, 2026', amount: 1250.00, status: 'processing' },
-      { id: 'OR-3980', date: 'May 04, 2026', amount: 1200.00, status: 'delivered' }
-    ]
+    totalOrders: dbOrders.length,
+    totalSpent,
+    orderHistory
   }
 }
 
@@ -149,6 +160,7 @@ export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (urlSearch !== null) {
@@ -158,11 +170,13 @@ export default function CustomersPage() {
 
   // Load registered user profiles from Supabase DB or fallback
   const loadCustomers = async () => {
+    setLoading(true)
     try {
       const res = await getUsersAction()
       if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
         const formatted = (res.data as Array<Record<string, unknown>>).map(formatDbProfile)
         setCustomers(formatted)
+        setLoading(false)
         return
       }
     } catch {
@@ -173,12 +187,14 @@ export default function CustomersPage() {
     if (stored) {
       try {
         setCustomers(JSON.parse(stored))
+        setLoading(false)
         return
       } catch {
         // Fallback
       }
     }
     setCustomers(initialCustomers)
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -246,7 +262,28 @@ export default function CustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredCustomers.length > 0 ? (
+            {loading ? (
+              Array.from({ length: 4 }).map((_, idx) => (
+                <TableRow key={idx} className="animate-pulse">
+                  <TableCell className="py-6 px-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-muted rounded-full shrink-0" />
+                      <div className="h-4 bg-muted rounded-full w-24" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-6 px-4">
+                    <div className="space-y-2">
+                      <div className="h-3.5 bg-muted rounded-full w-32" />
+                      <div className="h-3.5 bg-muted rounded-full w-28" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-16" /></TableCell>
+                  <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-8 mx-auto" /></TableCell>
+                  <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-14" /></TableCell>
+                  <TableCell className="py-6 px-6 text-right"><div className="w-8 h-8 rounded-lg bg-muted ml-auto" /></TableCell>
+                </TableRow>
+              ))
+            ) : filteredCustomers.length > 0 ? (
               filteredCustomers.map((customer) => (
                 <TableRow key={customer.id}>
                   <TableCell className="py-4 px-6">

@@ -16,7 +16,8 @@ import { allProducts, Product } from '@/lib/products'
 import { getProductsAction, updateProductAction } from '@/server/product'
 
 interface InventoryItem {
-  id: number
+  id: string
+  slug?: string
   name: string
   scientificName?: string
   category: string
@@ -35,12 +36,13 @@ export default function InventoryPage() {
   const fallbackInventory = useCallback(() => {
     const defaultInv = allProducts.map(p => ({
       id: p.id,
+      slug: p.slug,
       name: p.name,
       scientificName: p.scientificName,
       category: p.category,
       image: p.image,
-      stock_quantity: p.id === 1 ? 2 : p.id === 2 ? 4 : p.id === 6 ? 3 : p.id === 19 ? 0 : 15,
-      reserved_quantity: p.id === 1 ? 1 : p.id === 2 ? 2 : 0
+      stock_quantity: p.id === '00000000-0000-0000-0000-000000000001' ? 2 : p.id === '00000000-0000-0000-0000-000000000007' ? 4 : p.id === '00000000-0000-0000-0000-000000000006' ? 3 : p.id === '00000000-0000-0000-0000-000000000024' ? 0 : 15,
+      reserved_quantity: p.id === '00000000-0000-0000-0000-000000000001' ? 1 : p.id === '00000000-0000-0000-0000-000000000007' ? 2 : 0
     }))
     setItems(defaultInv)
   }, [])
@@ -51,12 +53,13 @@ export default function InventoryPage() {
       if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
         setItems((res.data as EnrichedProduct[]).map((p) => ({
           id: p.id,
+          slug: p.slug,
           name: p.name,
           scientificName: p.scientificName,
           category: p.category,
           image: p.image,
-          stock_quantity: p.stock_quantity !== undefined ? p.stock_quantity : (p.id === 1 ? 2 : p.id === 2 ? 4 : p.id === 6 ? 3 : p.id === 19 ? 0 : 15),
-          reserved_quantity: p.reserved_quantity !== undefined ? p.reserved_quantity : (p.id === 1 ? 1 : p.id === 2 ? 2 : 0)
+          stock_quantity: p.stock_quantity !== undefined ? p.stock_quantity : (p.id === '00000000-0000-0000-0000-000000000001' ? 2 : p.id === '00000000-0000-0000-0000-000000000007' ? 4 : p.id === '00000000-0000-0000-0000-000000000006' ? 3 : p.id === '00000000-0000-0000-0000-000000000024' ? 0 : 15),
+          reserved_quantity: p.reserved_quantity !== undefined ? p.reserved_quantity : (p.id === '00000000-0000-0000-0000-000000000001' ? 1 : p.id === '00000000-0000-0000-0000-000000000007' ? 2 : 0)
         })))
         return
       }
@@ -71,12 +74,13 @@ export default function InventoryPage() {
         if (decoded.length > 0) {
           setItems(decoded.map((p: EnrichedProduct) => ({
             id: p.id,
+            slug: p.slug,
             name: p.name,
             scientificName: p.scientificName,
             category: p.category,
             image: p.image,
-            stock_quantity: p.stock_quantity !== undefined ? p.stock_quantity : (p.id === 1 ? 2 : p.id === 2 ? 4 : p.id === 6 ? 3 : p.id === 19 ? 0 : 15),
-            reserved_quantity: p.reserved_quantity !== undefined ? p.reserved_quantity : (p.id === 1 ? 1 : p.id === 2 ? 2 : 0)
+            stock_quantity: p.stock_quantity !== undefined ? p.stock_quantity : (p.id === '00000000-0000-0000-0000-000000000001' ? 2 : p.id === '00000000-0000-0000-0000-000000000007' ? 4 : p.id === '00000000-0000-0000-0000-000000000006' ? 3 : p.id === '00000000-0000-0000-0000-000000000024' ? 0 : 15),
+            reserved_quantity: p.reserved_quantity !== undefined ? p.reserved_quantity : (p.id === '00000000-0000-0000-0000-000000000001' ? 1 : p.id === '00000000-0000-0000-0000-000000000007' ? 2 : 0)
           })))
           return
         }
@@ -93,7 +97,7 @@ export default function InventoryPage() {
   }, [loadInventory])
 
   // Update stock fields in DB and local state
-  const handleUpdateStock = async (id: number, field: 'stock_quantity' | 'reserved_quantity', delta: number) => {
+  const handleUpdateStock = async (id: string, field: 'stock_quantity' | 'reserved_quantity', delta: number) => {
     const targetItem = items.find(i => i.id === id)
     if (!targetItem) return
 
@@ -113,7 +117,7 @@ export default function InventoryPage() {
     }
   }
 
-  const handleManualInput = async (id: number, field: 'stock_quantity' | 'reserved_quantity', value: string) => {
+  const handleManualInput = async (id: string, field: 'stock_quantity' | 'reserved_quantity', value: string) => {
     const parsed = Math.max(0, parseInt(value) || 0)
     const updated = items.map(item => {
       if (item.id === id) {
@@ -222,7 +226,7 @@ export default function InventoryPage() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-muted/30 text-[10px] uppercase font-bold tracking-wider text-muted-foreground border-b border-border/80">
-                <th className="py-4 px-6 font-semibold">ID</th>
+                <th className="py-4 px-6 font-semibold w-40">Slug</th>
                 <th className="py-4 px-4 font-semibold">Specimen</th>
                 <th className="py-4 px-4 font-semibold">Category</th>
                 <th className="py-4 px-4 text-center font-semibold">Base Stock</th>
@@ -238,7 +242,7 @@ export default function InventoryPage() {
                   const status = getStatus(item.stock_quantity, item.reserved_quantity)
                   return (
                     <tr key={item.id} className="hover:bg-muted/10 transition-colors">
-                      <td className="py-4 px-6 font-bold text-neutral-400">{item.id}</td>
+                      <td className="py-4 px-6 text-neutral-400 font-mono text-[10px] break-all max-w-[140px]">{item.slug || item.id}</td>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl overflow-hidden border border-border relative shrink-0 bg-muted">

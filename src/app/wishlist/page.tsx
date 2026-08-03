@@ -7,14 +7,37 @@ import { Heart, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useShop } from '@/lib/shop-context'
-import { allProducts } from '@/lib/products'
+import { allProducts, Product } from '@/lib/products'
 import { ProductCard } from '@/components/products/product-card'
+import { getProductsAction } from '@/server/product'
+import { useState, useEffect } from 'react'
 
 export default function WishlistPage() {
   const { wishlist } = useShop()
+  const [dbProducts, setDbProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Filter products that are saved in the wishlist
-  const wishlistProducts = allProducts.filter((product) => wishlist.includes(product.id))
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const res = await getProductsAction()
+        if (res.success && res.data && Array.isArray(res.data)) {
+          setDbProducts(res.data as Product[])
+        } else {
+          setDbProducts(allProducts)
+        }
+      } catch (err) {
+        console.error('Failed to load products:', err)
+        setDbProducts(allProducts)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProducts()
+  }, [])
+
+  const listToUse = dbProducts.length > 0 ? dbProducts : (loading ? [] : allProducts)
+  const wishlistProducts = listToUse.filter((product) => wishlist.includes(product.id))
 
   return (
     <main className="min-h-screen flex flex-col bg-background">
@@ -38,7 +61,13 @@ export default function WishlistPage() {
             </p>
           </motion.div>
 
-          {wishlistProducts.length > 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="h-[360px] bg-muted/60 animate-pulse rounded-3xl border border-border/40" />
+              ))}
+            </div>
+          ) : wishlistProducts.length > 0 ? (
             /* Wishlist Items Grid using modular ProductCard */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {wishlistProducts.map((product, index) => (
