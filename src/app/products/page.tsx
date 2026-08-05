@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Search, Filter, ChevronDown } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { allProducts, Product } from '@/lib/products'
-import { getProductsAction } from '@/server/product'
+import { fetchProductsWithCache, getCachedProducts } from '@/utils/product-cache'
 
 function ProductCatalog() {
   const searchParams = useSearchParams()
@@ -23,22 +23,34 @@ function ProductCatalog() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function loadProducts() {
-      try {
-        const res = await getProductsAction()
-        if (res.success && res.data && Array.isArray(res.data)) {
-          setDbProducts(res.data as Product[])
-        } else {
-          setDbProducts(allProducts)
-        }
-      } catch (err) {
-        console.error('Failed to load products:', err)
-        setDbProducts(allProducts)
-      } finally {
-        setLoading(false)
-      }
+    let active = true;
+
+    // Check if we have cached products to immediately show so we can disable the loading state
+    const cachedProducts = getCachedProducts();
+    if (cachedProducts && cachedProducts.length > 0) {
+      setLoading(false);
     }
-    loadProducts()
+
+    fetchProductsWithCache(
+      (products) => {
+        if (!active) return;
+        setDbProducts(products);
+        setLoading(false);
+      },
+      () => {
+        if (active) setLoading(false);
+      }
+    ).catch((err) => {
+      console.error('Failed to load products:', err);
+      if (active) {
+        setDbProducts(allProducts);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
   }, [])
 
   useEffect(() => {

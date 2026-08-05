@@ -7,32 +7,40 @@ import Link from 'next/link'
 import { Product } from '@/lib/products'
 import { Leaf } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { getProductsAction } from '@/server/product'
+import { fetchProductsWithCache, getCachedProducts } from '@/utils/product-cache'
 
 export function FeaturedProducts() {
   const [featured, setFeatured] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function loadFeatured() {
-      try {
-        const res = await getProductsAction();
-        if (res.success && res.data && Array.isArray(res.data)) {
-          const dbProducts = res.data as Product[];
-          const matches = dbProducts.filter(p => p.featured);
-          if (matches.length > 0) {
-            setFeatured(matches.slice(0, 5));
-          } else {
-            setFeatured(dbProducts.slice(0, 5));
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load featured products:', err);
-      } finally {
-        setLoading(false);
-      }
+    let active = true;
+    
+    // Check if we have cached products to immediately show so we can disable the loading state
+    const cachedProducts = getCachedProducts();
+    if (cachedProducts && cachedProducts.length > 0) {
+      setLoading(false);
     }
-    loadFeatured();
+
+    fetchProductsWithCache(
+      (products) => {
+        if (!active) return;
+        const matches = products.filter(p => p.featured);
+        if (matches.length > 0) {
+          setFeatured(matches.slice(0, 5));
+        } else {
+          setFeatured(products.slice(0, 5));
+        }
+        setLoading(false);
+      },
+      () => {
+        if (active) setLoading(false);
+      }
+    );
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (

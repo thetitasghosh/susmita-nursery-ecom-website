@@ -11,7 +11,7 @@ import { useShop } from '@/lib/shop-context'
 import Image from 'next/image'
 import { WHATSAPP_NUMBER } from '@/constants'
 import { PlantCareSuggestions } from '@/components/products/plant-care-suggestions'
-import { getProductsAction } from '@/server/product'
+import { fetchProductsWithCache, getCachedProducts } from '@/utils/product-cache'
 import { useEffect } from 'react'
 
 const cultivarAliases: Record<string, string> = {
@@ -38,28 +38,45 @@ export default function ProductDetailPage({
   const [selectedImage, setSelectedImage] = useState<string>('')
 
   useEffect(() => {
-    async function loadProduct() {
-      try {
-        const res = await getProductsAction();
-        if (res.success && res.data && Array.isArray(res.data)) {
-          const dbProducts = res.data as Product[];
-          const found = dbProducts.find(p => p.id === params.id || p.slug === params.id);
-          if (found) {
-            setProduct(found);
-            setSelectedSize(found.sizes[0] || 'Standard');
-            setSelectedImage(found.image);
-          } else {
-            // Fallback or not found
-            setProduct(null);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load product from database:', err);
-      } finally {
+    let active = true;
+
+    // Check if we have a cached version of this product to display instantly
+    const cachedProducts = getCachedProducts();
+    if (cachedProducts) {
+      const found = cachedProducts.find(p => p.id === params.id || p.slug === params.id);
+      if (found) {
+        setProduct(found);
+        setSelectedSize(found.sizes[0] || 'Standard');
+        setSelectedImage(found.image);
         setLoading(false);
       }
     }
-    loadProduct();
+
+    fetchProductsWithCache(
+      (products) => {
+        if (!active) return;
+        const found = products.find(p => p.id === params.id || p.slug === params.id);
+        if (found) {
+          setProduct(found);
+          // Set standard defaults only if they aren't set yet
+          setSelectedSize(prev => prev || found.sizes[0] || 'Standard');
+          setSelectedImage(prev => prev || found.image);
+        } else {
+          setProduct(null);
+        }
+        setLoading(false);
+      },
+      () => {
+        if (active) setLoading(false);
+      }
+    ).catch((err) => {
+      console.error('Failed to load product details:', err);
+      if (active) setLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
   }, [params.id]);
 
   if (loading) {
