@@ -12,7 +12,6 @@ import {
   Mail, 
   Menu, 
   X, 
-  Bell, 
   Search,
   ExternalLink,
   ChevronRight,
@@ -82,7 +81,6 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const router = useRouter()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   
   // Auth state
@@ -594,39 +592,7 @@ export default function DashboardLayout({
               )}
             </div>
 
-            {/* Notifications Alert */}
-            <div className="relative">
-              <button
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="p-2.5 text-neutral-600 hover:text-neutral-900 bg-white border border-border rounded-xl cursor-pointer hover:bg-muted transition-colors relative"
-              >
-                <Bell size={16} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full border border-white" />
-              </button>
 
-              <div 
-                className={cn(
-                  "absolute right-0 mt-2.5 w-80 bg-card border border-border shadow-lg rounded-2xl p-4 z-50 transition-all duration-200",
-                  isNotificationsOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
-                )}
-              >
-                <h4 className="font-sans font-bold text-sm text-foreground mb-3 pb-1 border-b border-border/60">
-                  Recent Notifications
-                </h4>
-                <div className="space-y-3">
-                  <div className="text-xs p-2.5 bg-muted/30 border border-border/40 rounded-xl space-y-1">
-                    <span className="font-semibold text-primary block">New Order Recieved</span>
-                    <span className="text-neutral-500 font-light">Order #4092 placed by Ananya Mitra.</span>
-                    <span className="text-[10px] text-neutral-400 block font-light">5 mins ago</span>
-                  </div>
-                  <div className="text-xs p-2.5 bg-muted/30 border border-border/40 rounded-xl space-y-1">
-                    <span className="font-semibold text-accent-earth block">Low Stock Warning</span>
-                    <span className="text-neutral-500 font-light">Monstera Deliciosa is below the threshold of 5 units.</span>
-                    <span className="text-[10px] text-neutral-400 block font-light">2 hours ago</span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Profile Avatar Card */}
             <div className="flex items-center gap-2 border-l border-border/80 pl-3 sm:pl-4">

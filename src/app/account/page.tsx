@@ -11,6 +11,7 @@ import { useShop } from '@/lib/shop-context'
 import { customerLoginAction, customerSignupAction } from '@/server/auth'
 import { getAddressesAction, saveAddressAction, deleteAddressAction, updateUserProfileAction } from '@/server/user'
 import { getOrdersAction } from '@/server/order'
+import { getSubscriptionStatusAction, updateSubscriptionStatusAction } from '@/server/newsletter'
 import {
   User,
   MapPin,
@@ -104,6 +105,25 @@ export default function UserAccountPage() {
 
   // Selected Reservation Details Modal State
   const [activeReservationModal, setActiveReservationModal] = useState<PlantReservation | null>(null)
+
+  const [isNewsletterActive, setIsNewsletterActive] = useState(true)
+
+  // Load subscriber marketing preference
+  useEffect(() => {
+    async function checkSubscription() {
+      if (user && user.email) {
+        try {
+          const res = await getSubscriptionStatusAction(user.email as string)
+          if (res.success && res.isActive !== undefined) {
+            setIsNewsletterActive(res.isActive)
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+    checkSubscription()
+  }, [user])
 
   // Sync Supabase session profile data with client state
   useEffect(() => {
@@ -492,6 +512,18 @@ export default function UserAccountPage() {
                     </span>
                   </button>
 
+                  {authProfile?.role === 'admin' && (
+                    <Link
+                      href="/dashboard"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold text-primary hover:bg-primary-emerald hover:text-white bg-primary/5 border border-primary/25 transition-all cursor-pointer mt-2"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <ShieldCheck size={16} />
+                        Admin Dashboard Console
+                      </span>
+                    </Link>
+                  )}
+
                   <button
                     onClick={logoutUser}
                     className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 transition-all cursor-pointer"
@@ -855,6 +887,36 @@ export default function UserAccountPage() {
                       <label className="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" defaultChecked className="rounded text-primary focus:ring-primary h-4 w-4" />
                         <span>Notify me when wishlisted nursery specimens are back in stock at the offline store</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-border/60 space-y-3">
+                    <h3 className="text-sm font-serif font-bold text-foreground">Marketing & Newsletter Preferences</h3>
+                    <div className="space-y-2.5 text-xs">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={isNewsletterActive} 
+                          onChange={async (e) => {
+                            const val = e.target.checked
+                            setIsNewsletterActive(val)
+                            try {
+                              const res = await updateSubscriptionStatusAction(profile.email, val)
+                              if (res.success) {
+                                addToast(val ? 'Subscribed to marketing alerts.' : 'Unsubscribed from marketing alerts.', 'success')
+                              } else {
+                                console.error('[updateSubscriptionStatusAction Client Error]:', res.error)
+                                addToast(res.error || 'Failed to update newsletter status.', 'error')
+                              }
+                            } catch (err) {
+                              console.error('[updateSubscriptionStatusAction Catch Error]:', err)
+                              addToast('Error syncing preferences.', 'error')
+                            }
+                          }}
+                          className="rounded text-primary focus:ring-primary h-4 w-4" 
+                        />
+                        <span>Receive promotional newsletters, weekend care guides, and exclusive plant coupons</span>
                       </label>
                     </div>
                   </div>

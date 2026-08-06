@@ -1,18 +1,25 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { 
   Plus, 
   Edit3, 
   Trash2, 
-  X, 
   Check, 
   Eye, 
   EyeOff, 
   Sparkles,
   Link as LinkIcon
 } from 'lucide-react'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription
+} from '@/components/ui/sheet'
+
 
 interface Banner {
   id: number
@@ -274,176 +281,150 @@ export default function BannersPage() {
       </div>
 
       {/* Sheet Modal Drawer */}
-      <AnimatePresence>
-        {isSheetOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsSheetOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40"
-            />
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent className="max-w-2xl flex flex-col h-full overflow-hidden">
+          <SheetHeader>
+            <div className="flex items-center gap-2.5">
+              <span className="w-9 h-9 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/40">
+                <Sparkles className="text-secondary w-4 h-4" />
+              </span>
+              <div>
+                <SheetTitle>
+                  {editingBanner ? 'Edit Promo Banner' : 'Create Promo Banner'}
+                </SheetTitle>
+                <SheetDescription>
+                  {editingBanner ? `Banner ID: ${editingBanner.id}` : 'Configure marketing spotlight slide'}
+                </SheetDescription>
+              </div>
+            </div>
+          </SheetHeader>
 
-            {/* Drawer */}
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 bottom-0 right-0 w-full max-w-lg bg-card shadow-2xl z-50 flex flex-col"
-            >
-              {/* Header */}
-              <div className="p-6 border-b border-border/80 flex items-center justify-between bg-neutral-dark text-white rounded-tl-[36px]">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-9 h-9 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/40">
-                    <Sparkles className="text-secondary w-4 h-4" />
-                  </span>
-                  <div>
-                    <h2 className="font-serif font-bold text-lg leading-tight">
-                      {editingBanner ? 'Edit Promo Banner' : 'Create Promo Banner'}
-                    </h2>
-                    <span className="text-[9px] text-neutral-400 font-sans tracking-widest uppercase block mt-0.5">
-                      {editingBanner ? `Banner ID: ${editingBanner.id}` : 'Configure marketing spotlight slide'}
-                    </span>
-                  </div>
-                </div>
+          {/* Form Body */}
+          <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-semibold text-neutral-700">Campaign Header Title *</label>
+              <input
+                type="text"
+                required
+                value={formTitle}
+                onChange={(e) => setFormTitle(e.target.value)}
+                placeholder="e.g. Monsoon Planting Festival"
+                className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-semibold"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-neutral-700">Campaign Subtitle Description</label>
+              <textarea
+                rows={3}
+                value={formSubtitle}
+                onChange={(e) => setFormSubtitle(e.target.value)}
+                placeholder="Describe the promotion or event details..."
+                className="w-full bg-white border border-border/80 px-3.5 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs leading-normal"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-neutral-700">Banner Background Image URL *</label>
+              <input
+                type="text"
+                required
+                value={formImage}
+                onChange={(e) => setFormImage(e.target.value)}
+                className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-mono"
+              />
+              <div className="flex gap-2 pt-1">
                 <button
-                  onClick={() => setIsSheetOpen(false)}
-                  className="p-2 text-neutral-400 hover:text-white rounded-full bg-white/5 cursor-pointer"
+                  type="button"
+                  onClick={() => setFormImage('/images/hero-garden.jpg')}
+                  className="px-2 py-1 text-[9px] bg-muted border border-border hover:bg-neutral-200 rounded font-semibold"
                 >
-                  <X size={16} />
+                  Use Greenhouse Farm
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormImage('/images/plants/monstera-plant.jpg')}
+                  className="px-2 py-1 text-[9px] bg-muted border border-border hover:bg-neutral-200 rounded font-semibold"
+                >
+                  Use Monstera
                 </button>
               </div>
+            </div>
 
-              {/* Form Body */}
-              <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-neutral-700">Campaign Header Title *</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="font-semibold text-neutral-700">Button Call-To-Action Text *</label>
+                <input
+                  type="text"
+                  required
+                  value={formButtonText}
+                  onChange={(e) => setFormButtonText(e.target.value)}
+                  placeholder="e.g. Shop Now"
+                  className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-semibold"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-semibold text-neutral-700">Button Redirect Path *</label>
+                <input
+                  type="text"
+                  required
+                  value={formLink}
+                  onChange={(e) => setFormLink(e.target.value)}
+                  placeholder="/products"
+                  className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <div className="space-y-1.5">
+                <label className="font-semibold text-neutral-700">Display Priority (Order)</label>
+                <input
+                  type="number"
+                  required
+                  min={1}
+                  value={formPriority}
+                  onChange={(e) => setFormPriority(Number(e.target.value))}
+                  className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-semibold"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-semibold text-neutral-700 block">Initial Visibility State</label>
+                <label className="flex items-center gap-2.5 py-3 text-xs cursor-pointer select-none">
                   <input
-                    type="text"
-                    required
-                    value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
-                    placeholder="e.g. Monsoon Planting Festival"
-                    className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-semibold"
+                    type="checkbox"
+                    checked={formIsActive}
+                    onChange={() => setFormIsActive(!formIsActive)}
+                    className="accent-primary w-4 h-4 rounded border-border"
                   />
-                </div>
+                  <span className="font-medium text-neutral-700">Set as Active Campaign</span>
+                </label>
+              </div>
+            </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-neutral-700">Campaign Subtitle Description</label>
-                  <textarea
-                    rows={3}
-                    value={formSubtitle}
-                    onChange={(e) => setFormSubtitle(e.target.value)}
-                    placeholder="Describe the promotion or event details..."
-                    className="w-full bg-white border border-border/80 px-3.5 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs leading-normal"
-                  />
-                </div>
+            {/* Submit */}
+            <div className="border-t border-border/40 pt-6 mt-8 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsSheetOpen(false)}
+                className="px-5 py-2.5 rounded-full border border-border text-neutral-600 hover:bg-muted font-semibold text-xs cursor-pointer transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="bg-primary hover:bg-primary-emerald text-white px-6 py-2.5 rounded-full font-bold text-xs cursor-pointer shadow-md transition-all flex items-center gap-1"
+              >
+                <Check size={14} />
+                <span>Save Promo Campaign</span>
+              </button>
+            </div>
+          </form>
+        </SheetContent>
+      </Sheet>
 
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-neutral-700">Banner Background Image URL *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formImage}
-                    onChange={(e) => setFormImage(e.target.value)}
-                    className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-mono"
-                  />
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setFormImage('/images/hero-garden.jpg')}
-                      className="px-2 py-1 text-[9px] bg-muted border border-border hover:bg-neutral-200 rounded font-semibold"
-                    >
-                      Use Greenhouse Farm
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormImage('/images/plants/monstera-plant.jpg')}
-                      className="px-2 py-1 text-[9px] bg-muted border border-border hover:bg-neutral-200 rounded font-semibold"
-                    >
-                      Use Monstera
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="font-semibold text-neutral-700">Button Call-To-Action Text *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formButtonText}
-                      onChange={(e) => setFormButtonText(e.target.value)}
-                      placeholder="e.g. Shop Now"
-                      className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-semibold"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="font-semibold text-neutral-700">Button Redirect Path *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formLink}
-                      onChange={(e) => setFormLink(e.target.value)}
-                      placeholder="/products"
-                      className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-mono"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="space-y-1.5">
-                    <label className="font-semibold text-neutral-700">Display Priority (Order)</label>
-                    <input
-                      type="number"
-                      required
-                      min={1}
-                      value={formPriority}
-                      onChange={(e) => setFormPriority(Number(e.target.value))}
-                      className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-semibold"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="font-semibold text-neutral-700 block">Initial Visibility State</label>
-                    <label className="flex items-center gap-2.5 py-3 text-xs cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={formIsActive}
-                        onChange={() => setFormIsActive(!formIsActive)}
-                        className="accent-primary w-4 h-4 rounded border-border"
-                      />
-                      <span className="font-medium text-neutral-700">Set as Active Campaign</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Submit */}
-                <div className="border-t border-border/40 pt-6 mt-8 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsSheetOpen(false)}
-                    className="px-5 py-2.5 rounded-full border border-border text-neutral-600 hover:bg-muted font-semibold text-xs cursor-pointer transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-primary hover:bg-primary-emerald text-white px-6 py-2.5 rounded-full font-bold text-xs cursor-pointer shadow-md transition-all flex items-center gap-1"
-                  >
-                    <Check size={14} />
-                    <span>Save Promo Campaign</span>
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

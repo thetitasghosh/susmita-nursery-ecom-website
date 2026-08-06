@@ -199,24 +199,20 @@ export default function InventoryPage() {
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-thin">
-          <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider flex items-center gap-1 shrink-0 mr-1.5">
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider flex items-center gap-1 shrink-0 mr-1">
             <Filter size={12} className="text-primary" />
             <span>Filter Category:</span>
           </span>
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 text-xs rounded-full border transition-all cursor-pointer shrink-0 ${
-                selectedCategory === cat
-                  ? 'bg-primary text-white border-primary font-semibold'
-                  : 'bg-white hover:bg-muted text-neutral-500 border-border hover:text-foreground'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="bg-white border border-border/80 px-3.5 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer font-semibold"
+          >
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
         </div>
       </div>
 

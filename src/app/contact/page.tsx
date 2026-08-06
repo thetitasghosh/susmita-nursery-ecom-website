@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import { sendContactMessageAction } from '@/server/contact'
 
 function ContactContent() {
   const searchParams = useSearchParams()
@@ -17,6 +18,8 @@ function ContactContent() {
     message: '',
   })
   const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     const booking = searchParams.get('booking')
@@ -43,11 +46,24 @@ function ContactContent() {
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
-    setFormData({ name: '', email: '', subject: '', message: '' })
-    setTimeout(() => setSubmitted(false), 4000)
+    setIsSubmitting(true)
+    setSubmitError(null)
+    try {
+      const res = await sendContactMessageAction(formData)
+      if (res.success) {
+        setSubmitted(true)
+        setFormData({ name: '', email: '', subject: '', message: '' })
+        setTimeout(() => setSubmitted(false), 5000)
+      } else {
+        setSubmitError(res.error || 'Failed to send inquiry. Please try again.')
+      }
+    } catch {
+      setSubmitError('An unexpected network error occurred.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const contactInfo = [
@@ -184,6 +200,17 @@ function ContactContent() {
                 </motion.div>
               )}
 
+              {submitError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-semibold flex items-center gap-2"
+                >
+                  <span>⚠</span>
+                  <span>{submitError}</span>
+                </motion.div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -196,7 +223,8 @@ function ContactContent() {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground transition-all placeholder:text-neutral-400 text-sm"
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground transition-all placeholder:text-neutral-400 text-sm disabled:opacity-60"
                       placeholder="e.g. Rahul Sharma"
                     />
                   </div>
@@ -210,7 +238,8 @@ function ContactContent() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground transition-all placeholder:text-neutral-400 text-sm"
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground transition-all placeholder:text-neutral-400 text-sm disabled:opacity-60"
                       placeholder="e.g. rahul@example.com"
                     />
                   </div>
@@ -225,13 +254,14 @@ function ContactContent() {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground transition-all text-sm"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground transition-all text-sm disabled:opacity-60"
                   >
                     <option value="">Select general category</option>
-                    <option value="care">Plant Care & Advice</option>
-                    <option value="order">Order Tracking & Returns</option>
-                    <option value="wholesale">Wholesale & Trade Inquiries</option>
-                    <option value="landscape">Garden Landscaping Service</option>
+                    <option value="reservation">In-Store Plant Reservations & Pickups</option>
+                    <option value="care">Plant Care & Botanical Advice</option>
+                    <option value="wholesale">Nursery Visits & Bulk Wholesales</option>
+                    <option value="landscape">Landscaping & Plant Rental Services</option>
                   </select>
                 </div>
 
@@ -244,17 +274,19 @@ function ContactContent() {
                     value={formData.message}
                     onChange={handleChange}
                     required
+                    disabled={isSubmitting}
                     rows={5}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground transition-all resize-none text-sm placeholder:text-neutral-400"
+                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground transition-all resize-none text-sm placeholder:text-neutral-400 disabled:opacity-60"
                     placeholder="Write your query here..."
                   />
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full bg-primary-emerald hover:bg-primary-emerald/90 text-white font-bold py-3 rounded-xl transition-all shadow-md transform active:translate-y-px cursor-pointer"
+                  disabled={isSubmitting}
+                  className="w-full bg-primary-emerald hover:bg-primary-emerald/90 text-white font-bold py-3 rounded-xl transition-all shadow-md transform active:translate-y-px cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Submit Inquiry
+                  {isSubmitting ? 'Submitting Inquiry...' : 'Submit Inquiry'}
                 </Button>
               </form>
             </motion.div>

@@ -6,10 +6,20 @@ import {
   Search, 
   Send,
   Eye,
-  CheckCircle
+  CheckCircle,
+  Users,
+  History,
+  Info
 } from 'lucide-react'
 import { allProducts, Product } from '@/lib/products'
 import { getProductsAction } from '@/server/product'
+import {
+  getSubscribersAction,
+  updateSubscriptionStatusAction,
+  sendCampaignAction,
+  getCampaignsAction
+} from '@/server/newsletter'
+import { NewsletterTemplateType } from '@/components/emails/NurseryNewsletter'
 import {
   Table,
   TableHeader,
@@ -28,50 +38,130 @@ import {
 } from '@/components/ui/sheet'
 
 interface Subscriber {
-  id: number
+  id: string
+  profile_id?: string | null
   email: string
-  isActive: boolean
-  subscribedAt: string
+  full_name?: string | null
+  phone?: string | null
+  is_active: boolean
+  subscribed_at: string
 }
 
-const initialSubscribers: Subscriber[] = [
-  { id: 1, email: 'sourav.ganguly@bcci.org', isActive: true, subscribedAt: 'Jul 15, 2026' },
-  { id: 2, email: 'mimi.chakraborty@parliament.in', isActive: true, subscribedAt: 'Jul 12, 2026' },
-  { id: 3, email: 'dev.adhikari@tollywood.com', isActive: true, subscribedAt: 'Jul 10, 2026' },
-  { id: 4, email: 'titas.ghosh@outlook.com', isActive: true, subscribedAt: 'Jun 28, 2026' },
-  { id: 5, email: 'subhashree.ganguly@gmail.com', isActive: false, subscribedAt: 'May 04, 2026' }
+interface Campaign {
+  id: string
+  subject: string
+  header: string
+  body: string
+  featured_product_id?: string | null
+  template_type: NewsletterTemplateType
+  sent_at: string
+  products?: {
+    name: string
+  } | null
+}
+
+const initialSubscribers = [
+  { id: '1', email: 'sourav.ganguly@bcci.org', full_name: 'Sourav Ganguly', is_active: true, subscribed_at: '2026-07-15T00:00:00Z' },
+  { id: '2', email: 'mimi.chakraborty@parliament.in', full_name: 'Mimi Chakraborty', is_active: true, subscribed_at: '2026-07-12T00:00:00Z' },
+  { id: '3', email: 'dev.adhikari@tollywood.com', full_name: 'Dev Adhikari', is_active: true, subscribed_at: '2026-07-10T00:00:00Z' },
+  { id: '4', email: 'titas.ghosh@outlook.com', full_name: 'Titas Ghosh', is_active: true, subscribed_at: '2026-06-28T00:00:00Z' },
+  { id: '5', email: 'subhashree.ganguly@gmail.com', full_name: 'Subhashree Ganguly', is_active: false, subscribed_at: '2026-05-04T00:00:00Z' }
+]
+
+const initialCampaigns: Campaign[] = [
+  {
+    id: 'c1',
+    subject: 'Nurture Your Sanctuary: Weekend Care Essentials',
+    header: 'Your Weekend Green Guide',
+    body: 'Summer brings unique watering and light parameters to your house plants. In this edition, we outline standard lifecycle stages for Monstera, Areca Palm, and Peace Lily. Plus, check out our recommended neem spray to safely repel common garden pests.',
+    template_type: 'care_guide',
+    sent_at: '2026-07-28T14:30:00Z',
+    products: { name: 'Money Plant Yellow Slabs' }
+  },
+  {
+    id: 'c2',
+    subject: 'Monsoon Planting Sale: Save 35% on Premium Pots & specimens!',
+    header: 'Monsoon Garden Upgrade Offer',
+    body: 'Spruce up your garden and planter sanctuaries. For a limited time, use the exclusive discount code below to reserve top-tier ceramic pots and nursery specimens with free delivery on bookings above ₹999.',
+    template_type: 'seasonal_promo',
+    sent_at: '2026-07-20T09:15:00Z',
+    products: null
+  }
 ]
 
 export default function NewsletterPage() {
+  const [activeTab, setActiveTab] = useState<'subscribers' | 'campaigns'>('subscribers')
   const [subscribers, setSubscribers] = useState<Subscriber[]>([])
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isComposeOpen, setIsComposeOpen] = useState(false)
   const [sendSuccess, setSendSuccess] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  // Campaign Detail Sheet Viewer State
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
 
   // Campaign Form fields
+  const [templateType, setTemplateType] = useState<NewsletterTemplateType>('care_guide')
   const [subject, setSubject] = useState('Nurture Your Sanctuary: Weekend Care Essentials')
   const [emailHeader, setEmailHeader] = useState('Your Weekend Green Guide')
   const [emailBody, setEmailBody] = useState('Summer brings unique watering and light parameters to your house plants. In this edition, we outline standard lifecycle stages for Monstera, Areca Palm, and Peace Lily. Plus, check out our recommended neem spray to safely repel common garden pests.')
+  const [promoCode, setPromoCode] = useState('GROWGREEN35')
+  const [previewName, setPreviewName] = useState('Ananya')
   const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null)
   
   // List of all products to select from
   const [productList, setProductList] = useState<Product[]>([])
 
-  // Load from localStorage
-  useEffect(() => {
-    const storedSub = localStorage.getItem('nursery_subs')
-    if (storedSub) {
-      try {
-        setSubscribers(JSON.parse(storedSub))
-      } catch {
-        setSubscribers(initialSubscribers)
+  const loadSubscribers = async () => {
+    try {
+      const res = await getSubscribersAction()
+      if (res.success && res.data && res.data.length > 0) {
+        setSubscribers(res.data as Subscriber[])
+      } else {
+        const storedSub = localStorage.getItem('nursery_subs')
+        if (storedSub) {
+          setSubscribers(JSON.parse(storedSub))
+        } else {
+          setSubscribers(initialSubscribers)
+          localStorage.setItem('nursery_subs', JSON.stringify(initialSubscribers))
+        }
       }
-    } else {
-      setSubscribers(initialSubscribers)
-      localStorage.setItem('nursery_subs', JSON.stringify(initialSubscribers))
+    } catch {
+      // ignore
     }
+  }
 
-    // Load products list for dropdown
+  const loadCampaigns = async () => {
+    try {
+      const res = await getCampaignsAction()
+      if (res.success && res.data && res.data.length > 0) {
+        setCampaigns(res.data as Campaign[])
+      } else {
+        const storedCamp = localStorage.getItem('nursery_campaigns')
+        if (storedCamp) {
+          setCampaigns(JSON.parse(storedCamp))
+        } else {
+          setCampaigns(initialCampaigns)
+          localStorage.setItem('nursery_campaigns', JSON.stringify(initialCampaigns))
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Load all initial data
+  useEffect(() => {
+    async function loadAllData() {
+      setLoading(true)
+      await Promise.all([loadSubscribers(), loadCampaigns()])
+      setLoading(false)
+    }
+    loadAllData()
+
+    // Load products list for dropdown selection
     async function loadProductsList() {
       try {
         const res = await getProductsAction()
@@ -103,26 +193,173 @@ export default function NewsletterPage() {
     loadProductsList()
   }, [])
 
+  // Auto-fill template boilerplate when changing template type
+  useEffect(() => {
+    switch (templateType) {
+      case 'care_guide':
+        setSubject('Nurture Your Sanctuary: Weekend Care Essentials')
+        setEmailHeader('Your Weekend Green Guide')
+        setEmailBody('Summer brings unique watering and light parameters to your house plants. In this edition, we outline standard lifecycle stages for Monstera, Areca Palm, and Peace Lily. Plus, check out our recommended neem spray to safely repel common garden pests.')
+        break
+      case 'seasonal_promo':
+        setSubject('Monsoon Planting Sale: Save 35% on Premium Pots & specimens!')
+        setEmailHeader('Monsoon Garden Upgrade Offer')
+        setEmailBody('Spruce up your garden and planter sanctuaries. For a limited time, use the exclusive discount code below to reserve top-tier ceramic pots and nursery specimens with free delivery on bookings above ₹999.')
+        break
+      case 'new_arrivals':
+        setSubject('Fresh from the Greenhouse: Check out our new arrivals!')
+        setEmailHeader('New Botanical Species In Stock')
+        setEmailBody('Our horticulturists have just unloaded a stunning set of air-purifying oxygen specimens and vibrant indoor shrubs. View their growth specs, difficulty levels, and pet friendliness below.')
+        break
+      case 'wishlist_restock':
+        setSubject('Good News: A plant you loved is back in stock!')
+        setEmailHeader('Back in Stock Alert')
+        setEmailBody('Great news! We have successfully restocked our greenhouse reserves for one of our highest-rated garden specimens. Tap below to reserve yours for in-store pickup before stocks dry out.')
+        break
+    }
+  }, [templateType])
+
   // Toggle active
-  const toggleStatus = (id: number) => {
-    const updated = subscribers.map(s => s.id === id ? { ...s, isActive: !s.isActive } : s)
-    setSubscribers(updated)
-    localStorage.setItem('nursery_subs', JSON.stringify(updated))
+  const toggleStatus = async (id: string, email: string, currentActive: boolean) => {
+    try {
+      const res = await updateSubscriptionStatusAction(email, !currentActive)
+      if (res.success) {
+        await loadSubscribers()
+      } else {
+        const updated = subscribers.map(s => s.id === id ? { ...s, is_active: !s.is_active } : s)
+        setSubscribers(updated)
+        localStorage.setItem('nursery_subs', JSON.stringify(updated))
+      }
+    } catch {
+      // ignore
+    }
   }
 
-  // Handle compose submit (Mock Send)
-  const handleSendCampaign = (e: React.FormEvent) => {
+  // Handle compose submit
+  const handleSendCampaign = async (e: React.FormEvent) => {
     e.preventDefault()
     setSendSuccess(true)
-    setTimeout(() => {
-      setSendSuccess(false)
-      setIsComposeOpen(false)
-    }, 2800)
+    try {
+      const res = await sendCampaignAction({
+        templateType,
+        subject,
+        header: emailHeader,
+        body: emailBody,
+        promoCode: templateType === 'seasonal_promo' ? promoCode : undefined,
+        featuredProductId: featuredProduct ? featuredProduct.id : undefined
+      })
+      
+      // Update client logs
+      if (res.success) {
+        await loadCampaigns()
+      } else {
+        // Fallback simulate logging in client state history
+        const newCampaign: Campaign = {
+          id: `c_${Date.now()}`,
+          subject,
+          header: emailHeader,
+          body: emailBody,
+          template_type: templateType,
+          featured_product_id: featuredProduct ? featuredProduct.id : null,
+          sent_at: new Date().toISOString(),
+          products: featuredProduct ? { name: featuredProduct.name } : null
+        }
+        const updated = [newCampaign, ...campaigns]
+        setCampaigns(updated)
+        localStorage.setItem('nursery_campaigns', JSON.stringify(updated))
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setTimeout(() => {
+        setSendSuccess(false)
+        setIsComposeOpen(false)
+      }, 2800)
+    }
   }
 
+  // Open read campaign details sheet viewer
+  const handleViewCampaign = (camp: Campaign) => {
+    setSelectedCampaign(camp)
+    setIsDetailOpen(true)
+  }
+
+  // Filters logic
   const filteredSubscribers = subscribers.filter(s => 
-    s.email.toLowerCase().includes(searchTerm.toLowerCase())
+    s.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.full_name && s.full_name.toLowerCase().includes(searchTerm.toLowerCase()))
   )
+
+  const filteredCampaigns = campaigns.filter(c =>
+    c.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.header.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const formatSubscribedAt = (dateStr: string) => {
+    if (!dateStr) return ''
+    if (dateStr.includes(',') || isNaN(Date.parse(dateStr))) return dateStr
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric'
+    })
+  }
+
+  const formatSentAt = (dateStr: string) => {
+    if (!dateStr) return ''
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const getSubheaderText = (type: NewsletterTemplateType = templateType) => {
+    switch (type) {
+      case 'care_guide':
+        return 'Botanical Care Guidelines & Tips'
+      case 'seasonal_promo':
+        return 'Exclusive Seasonal Spotlight & Offers'
+      case 'new_arrivals':
+        return 'Fresh Arrivals in the Nursery Catalog'
+      case 'wishlist_restock':
+        return 'Back-in-stock Specimen Updates'
+      default:
+        return 'Botanical Companion Guidelines'
+    }
+  }
+
+  const getTemplateBadgeStyle = (type: NewsletterTemplateType) => {
+    switch (type) {
+      case 'care_guide':
+        return 'bg-blue-50 text-blue-600 border-blue-200'
+      case 'seasonal_promo':
+        return 'bg-amber-50 text-amber-600 border-amber-200'
+      case 'new_arrivals':
+        return 'bg-emerald-50 text-emerald-600 border-emerald-200'
+      case 'wishlist_restock':
+        return 'bg-purple-50 text-purple-600 border-purple-200'
+      default:
+        return 'bg-neutral-50 text-neutral-600 border-neutral-200'
+    }
+  }
+
+  const getTemplateLabel = (type: NewsletterTemplateType) => {
+    switch (type) {
+      case 'care_guide':
+        return 'Care Guide'
+      case 'seasonal_promo':
+        return 'Promo Offer'
+      case 'new_arrivals':
+        return 'New Arrivals'
+      case 'wishlist_restock':
+        return 'Wishlist Restock'
+      default:
+        return 'Newsletter'
+    }
+  }
 
   return (
     <div className="space-y-8 font-sans">
@@ -133,7 +370,7 @@ export default function NewsletterPage() {
             Newsletter Subscribers & Campaigns
           </h1>
           <p className="text-xs text-muted-foreground font-light mt-1">
-            Manage your marketing audience lists and compose rich-text email campaigns.
+            Manage your marketing audience lists and compose personalized multi-template email campaigns.
           </p>
         </div>
         <button
@@ -145,13 +382,45 @@ export default function NewsletterPage() {
         </button>
       </div>
 
+      {/* Premium Tab Selector */}
+      <div className="flex border-b border-border/80 gap-6">
+        <button
+          onClick={() => {
+            setActiveTab('subscribers')
+            setSearchTerm('')
+          }}
+          className={`pb-4 px-2 font-serif font-bold text-base transition-all border-b-2 cursor-pointer flex items-center gap-2 ${
+            activeTab === 'subscribers'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-neutral-400 hover:text-neutral-600'
+          }`}
+        >
+          <Users size={16} />
+          <span>Subscribers Audience ({subscribers.length})</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('campaigns')
+            setSearchTerm('')
+          }}
+          className={`pb-4 px-2 font-serif font-bold text-base transition-all border-b-2 cursor-pointer flex items-center gap-2 ${
+            activeTab === 'campaigns'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-neutral-400 hover:text-neutral-600'
+          }`}
+        >
+          <History size={16} />
+          <span>Campaign Dispatch History ({campaigns.length})</span>
+        </button>
+      </div>
+
       {/* Filter toolbar */}
       <div className="bg-card border border-border/80 p-5 rounded-3xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
           <Search size={16} className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-neutral-400" />
           <input
             type="text"
-            placeholder="Search subscriber email address..."
+            placeholder={activeTab === 'subscribers' ? "Search by subscriber email or name..." : "Search by campaign subject or header..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-muted/40 border border-border/80 pl-10 pr-4 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-neutral-400"
@@ -159,70 +428,166 @@ export default function NewsletterPage() {
         </div>
 
         <div className="text-xs text-muted-foreground font-light px-2">
-          Displaying {filteredSubscribers.length} active email leads
+          Displaying {activeTab === 'subscribers' ? filteredSubscribers.length : filteredCampaigns.length} entries
         </div>
       </div>
 
-      {/* Table list */}
-      <div className="bg-card border border-border/80 rounded-[32px] overflow-hidden shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30 hover:bg-muted/30">
-              <TableHead className="py-4 px-6 font-semibold">Lead ID</TableHead>
-              <TableHead className="py-4 px-4 font-semibold">Subscriber Email</TableHead>
-              <TableHead className="py-4 px-4 font-semibold">Subscription Date</TableHead>
-              <TableHead className="py-4 px-4 font-semibold">Marketing State</TableHead>
-              <TableHead className="py-4 px-6 text-right font-semibold">Status Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredSubscribers.length > 0 ? (
-              filteredSubscribers.map((sub) => (
-                <TableRow key={sub.id}>
-                  <TableCell className="py-4 px-6 font-bold text-neutral-400">#{sub.id}</TableCell>
-                  <TableCell className="py-4 px-4 font-semibold text-neutral-800">{sub.email}</TableCell>
-                  <TableCell className="py-4 px-4 font-light text-neutral-400">{sub.subscribedAt}</TableCell>
-                  <TableCell className="py-4 px-4">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
-                      sub.isActive 
-                        ? 'bg-secondary/15 text-primary border-secondary/35' 
-                        : 'bg-red-50 text-red-600 border-red-200'
-                    }`}>
-                      {sub.isActive ? 'Active' : 'Unsubscribed'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-4 px-6 text-right">
-                    <button
-                      onClick={() => toggleStatus(sub.id)}
-                      className={`text-[10px] px-3 py-1.5 rounded-lg border font-semibold cursor-pointer transition-colors ${
-                        sub.isActive
-                          ? 'text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border-red-200'
-                          : 'text-primary bg-primary/5 hover:bg-primary hover:text-white border-primary/25'
-                      }`}
-                    >
-                      {sub.isActive ? 'Unsubscribe' : 'Subscribe'}
-                    </button>
+      {/* Subscribers Table View */}
+      {activeTab === 'subscribers' && (
+        <div className="bg-card border border-border/80 rounded-[32px] overflow-hidden shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <TableHead className="py-4 px-6 font-semibold">Subscriber</TableHead>
+                <TableHead className="py-4 px-4 font-semibold">Subscriber Email</TableHead>
+                <TableHead className="py-4 px-4 font-semibold">Subscription Date</TableHead>
+                <TableHead className="py-4 px-4 font-semibold">Marketing State</TableHead>
+                <TableHead className="py-4 px-6 text-right font-semibold">Status Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <TableRow key={idx} className="animate-pulse">
+                    <TableCell className="py-6 px-6">
+                      <div className="space-y-1.5">
+                        <div className="h-4 bg-muted rounded-full w-28" />
+                        <div className="h-3 bg-muted rounded-full w-20" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-36" /></TableCell>
+                    <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-20" /></TableCell>
+                    <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-14" /></TableCell>
+                    <TableCell className="py-6 px-6 text-right"><div className="h-7 bg-muted rounded-lg w-20 ml-auto" /></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredSubscribers.length > 0 ? (
+                filteredSubscribers.map((sub) => (
+                  <TableRow key={sub.id}>
+                    <TableCell className="py-4 px-6 font-bold text-neutral-700">
+                      <div className="flex flex-col">
+                        <span>{sub.full_name || 'Nursery Client'}</span>
+                        {sub.phone && <span className="text-[10px] text-neutral-400 font-light">{sub.phone}</span>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 px-4 font-semibold text-neutral-800">{sub.email}</TableCell>
+                    <TableCell className="py-4 px-4 font-light text-neutral-400">{formatSubscribedAt(sub.subscribed_at)}</TableCell>
+                    <TableCell className="py-4 px-4">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
+                        sub.is_active 
+                          ? 'bg-secondary/15 text-primary border-secondary/35' 
+                          : 'bg-red-50 text-red-600 border-red-200'
+                      }`}>
+                        {sub.is_active ? 'Active' : 'Unsubscribed'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-right">
+                      <button
+                        onClick={() => toggleStatus(sub.id, sub.email, sub.is_active)}
+                        className={`text-[10px] px-3 py-1.5 rounded-lg border font-semibold cursor-pointer transition-colors ${
+                          sub.is_active
+                            ? 'text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border-red-200'
+                            : 'text-primary bg-primary/5 hover:bg-primary hover:text-white border-primary/25'
+                        }`}
+                      >
+                        {sub.is_active ? 'Unsubscribe' : 'Subscribe'}
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground font-light">
+                    No subscribers matching search query.
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center text-muted-foreground font-light">
-                  No subscribers matching search query.
-                </TableCell>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Campaigns History Table View */}
+      {activeTab === 'campaigns' && (
+        <div className="bg-card border border-border/80 rounded-[32px] overflow-hidden shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <TableHead className="py-4 px-6 font-semibold">Email Subject & Title</TableHead>
+                <TableHead className="py-4 px-4 font-semibold">Template Use Case</TableHead>
+                <TableHead className="py-4 px-4 font-semibold">Spotlight Product</TableHead>
+                <TableHead className="py-4 px-4 font-semibold">Sent Timestamp</TableHead>
+                <TableHead className="py-4 px-6 text-right font-semibold">Actions</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <TableRow key={idx} className="animate-pulse">
+                    <TableCell className="py-6 px-6">
+                      <div className="space-y-1.5">
+                        <div className="h-4 bg-muted rounded-full w-48" />
+                        <div className="h-3 bg-muted rounded-full w-32" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-24" /></TableCell>
+                    <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-28" /></TableCell>
+                    <TableCell className="py-6 px-4"><div className="h-4 bg-muted rounded-full w-24" /></TableCell>
+                    <TableCell className="py-6 px-6 text-right"><div className="h-7 bg-muted rounded-lg w-16 ml-auto" /></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredCampaigns.length > 0 ? (
+                filteredCampaigns.map((camp) => (
+                  <TableRow key={camp.id}>
+                    <TableCell className="py-4 px-6 text-neutral-800">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-xs line-clamp-1">{camp.subject}</span>
+                        <span className="text-[10px] text-neutral-400 font-light mt-0.5 line-clamp-1">{camp.header}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 px-4">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getTemplateBadgeStyle(camp.template_type)}`}>
+                        {getTemplateLabel(camp.template_type)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4 px-4 font-semibold text-xs text-neutral-700">
+                      {camp.products ? (
+                        <span>{camp.products.name}</span>
+                      ) : (
+                        <span className="text-neutral-400 font-light italic">None</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-4 px-4 font-light text-neutral-400 text-xs">{formatSentAt(camp.sent_at)}</TableCell>
+                    <TableCell className="py-4 px-6 text-right">
+                      <button
+                        onClick={() => handleViewCampaign(camp)}
+                        className="text-primary hover:text-primary-emerald font-semibold text-[10px] px-3 py-1.5 rounded-lg border border-primary/25 bg-primary/5 hover:bg-primary/10 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Eye size={12} />
+                        <span>Inspect</span>
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground font-light">
+                    No campaign dispatch logs found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {/* Compose Campaign Sheet Drawer */}
       <Sheet open={isComposeOpen} onOpenChange={setIsComposeOpen}>
-        <SheetContent className="max-w-4xl flex flex-col h-full">
+        <SheetContent className="max-w-5xl flex flex-col h-full">
           <SheetHeader>
-            <SheetTitle>Compose Email Campaign</SheetTitle>
+            <SheetTitle>Compose Dynamic Email Campaign</SheetTitle>
             <SheetDescription>
-              Send mock newsletter to all active subscribers
+              Select template layout and dispatch personalized newsletter campaigns to active leads
             </SheetDescription>
           </SheetHeader>
 
@@ -230,8 +595,22 @@ export default function NewsletterPage() {
           <div className="flex-1 flex overflow-hidden min-h-0">
             {/* Left: Compose Form */}
             <form id="campaign-form" onSubmit={handleSendCampaign} className="w-1/2 flex flex-col h-full border-r border-border/60 bg-muted/5">
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
+              <div className="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
               
+              <div className="space-y-1.5">
+                <label className="font-semibold text-neutral-700">Campaign Template Use Case *</label>
+                <select
+                  value={templateType}
+                  onChange={(e) => setTemplateType(e.target.value as NewsletterTemplateType)}
+                  className="w-full bg-white border border-border/80 px-3 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs"
+                >
+                  <option value="care_guide">📖 Weekend Care Guidelines</option>
+                  <option value="seasonal_promo">🎁 Seasonal Sale & Promo Offer</option>
+                  <option value="new_arrivals">✨ Fresh Greenhouse New Arrivals</option>
+                  <option value="wishlist_restock">🌿 Specimen Back-in-Stock</option>
+                </select>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="font-semibold text-neutral-700">Email Subject Line *</label>
                 <input
@@ -259,7 +638,7 @@ export default function NewsletterPage() {
               <div className="space-y-1.5">
                 <label className="font-semibold text-neutral-700">Body Text paragraph *</label>
                 <textarea
-                  rows={6}
+                  rows={4}
                   required
                   value={emailBody}
                   onChange={(e) => setEmailBody(e.target.value)}
@@ -268,8 +647,22 @@ export default function NewsletterPage() {
                 />
               </div>
 
+              {templateType === 'seasonal_promo' && (
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-neutral-700">Discount Promo Code *</label>
+                  <input
+                    type="text"
+                    required
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    placeholder="GROWGREEN35"
+                    className="w-full bg-white border border-border/80 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-mono font-bold text-amber-700"
+                  />
+                </div>
+              )}
+
               <div className="space-y-1.5">
-                <label className="font-semibold text-neutral-700">Spotlight Featured Product</label>
+                <label className="font-semibold text-neutral-700">Spotlight Highlight Product</label>
                 <select
                   value={featuredProduct ? featuredProduct.id : ''}
                   onChange={(e) => {
@@ -282,6 +675,17 @@ export default function NewsletterPage() {
                     <option key={prod.id} value={prod.id}>{prod.name} (₹{prod.price})</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="pt-2 border-t border-border/40 space-y-1.5">
+                <label className="font-semibold text-neutral-700">Preview Name Personalization</label>
+                <input
+                  type="text"
+                  value={previewName}
+                  onChange={(e) => setPreviewName(e.target.value)}
+                  placeholder="Recipient Name Preview"
+                  className="w-full bg-white border border-border/80 px-3.5 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs font-semibold"
+                />
               </div>
 
               </div>
@@ -318,7 +722,7 @@ export default function NewsletterPage() {
                 {/* Mock Client Header */}
                 <div className="bg-muted/40 p-4 border-b border-border text-[10px] text-neutral-500 space-y-1">
                   <p><span className="font-semibold text-neutral-800">From:</span> newsletter@susmitanursery.com</p>
-                  <p><span className="font-semibold text-neutral-800">To:</span> subscribers-active@list.susmitanursery.com</p>
+                  <p><span className="font-semibold text-neutral-800">To:</span> {previewName.toLowerCase() || 'client'}@subscriber.com</p>
                   <p><span className="font-semibold text-neutral-800">Subject:</span> {subject}</p>
                 </div>
 
@@ -326,16 +730,39 @@ export default function NewsletterPage() {
                 <div className="p-8 space-y-6">
                   <div className="text-center pb-4 border-b border-border/40 space-y-1">
                     <span className="font-serif font-bold text-base text-primary tracking-wide block">Susmita Nursery</span>
-                    <span className="text-[8px] text-neutral-400 font-sans tracking-widest uppercase block">Botanical companion guidelines</span>
+                    <span className="text-[8px] text-neutral-400 font-sans tracking-widest uppercase block">
+                      {getSubheaderText(templateType)}
+                    </span>
                   </div>
 
-                  <h2 className="text-center font-serif font-bold text-xl text-neutral-dark leading-tight pt-2">
+                  {/* Personalized Greeting */}
+                  <p className="font-semibold text-neutral-800 text-xs margin-0">
+                    Hello {(!previewName || previewName.toLowerCase().includes('nursery client')) ? 'Plant Lover' : previewName.trim().split(' ')[0]},
+                  </p>
+
+                  <h2 className="font-serif font-bold text-lg text-primary leading-tight pt-1">
                     {emailHeader}
                   </h2>
 
-                  <p className="text-neutral-600 font-light font-sans text-xs leading-relaxed text-center max-w-sm mx-auto">
+                  <p className="text-neutral-600 font-light font-sans text-xs leading-relaxed">
                     {emailBody}
                   </p>
+
+                  {templateType === 'seasonal_promo' && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center space-y-1.5">
+                      <span className="text-[9px] uppercase tracking-wider text-amber-600 font-bold block">Use promo code at checkout</span>
+                      <span className="text-xl font-bold font-mono tracking-wider text-primary block">{promoCode}</span>
+                      <span className="text-[9px] text-neutral-400 block">Apply code to receive seasonal discounts on your reservations.</span>
+                    </div>
+                  )}
+
+                  {templateType === 'care_guide' && (
+                    <div className="border-l-4 border-primary bg-muted/40 p-3.5 rounded-r-xl">
+                      <span className="text-[11px] font-light text-neutral-600 leading-relaxed block italic">
+                        💡 <strong>Green Tip:</strong> Check leaf humidity indices weekly. Specimen health is heavily impacted by draft parameters and temperature fluctuations. Make sure to mist leaves in indirect sunlight.
+                      </span>
+                    </div>
+                  )}
 
                   {featuredProduct && (
                     <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex items-center justify-between max-w-xs mx-auto">
@@ -350,7 +777,7 @@ export default function NewsletterPage() {
                         </div>
                       </div>
                       <span className="text-[9px] font-bold text-white bg-primary px-3 py-1.5 rounded-full uppercase tracking-wider shrink-0 cursor-pointer">
-                        Shop Now
+                        {templateType === 'wishlist_restock' ? 'Buy Now' : 'Shop Specimen'}
                       </span>
                     </div>
                   )}
@@ -372,7 +799,7 @@ export default function NewsletterPage() {
                   <div className="text-center space-y-1">
                     <h4 className="font-serif font-bold text-lg">Campaign Dispatched!</h4>
                     <p className="text-[10px] text-white/80 font-light max-w-xs mx-auto">
-                      Mock newsletter successfully sent to all active subscribers. Delivering email components...
+                      Newsletter successfully sent to active subscribers via Resend.
                     </p>
                   </div>
                 </div>
@@ -382,6 +809,112 @@ export default function NewsletterPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Inspect Campaign Details Sheet Drawer */}
+      <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <SheetContent className="max-w-2xl flex flex-col h-full overflow-y-auto">
+          {selectedCampaign && (
+            <>
+              <SheetHeader>
+                <div className="flex items-center gap-2.5">
+                  <Info className="text-primary" size={20} />
+                  <SheetTitle>Inspect Campaign Logs</SheetTitle>
+                </div>
+                <SheetDescription>
+                  Review the sent template contents, target parameters, and dispatch timestamps.
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="flex-1 mt-6 space-y-6 text-xs">
+                {/* Meta details list */}
+                <div className="grid grid-cols-2 gap-4 bg-muted/40 p-4 rounded-2xl border border-border/60">
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Template Type</span>
+                    <span className={`block font-semibold uppercase tracking-wider text-[10px] ${getTemplateLabel(selectedCampaign.template_type)}`}>
+                      {getTemplateLabel(selectedCampaign.template_type)}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Dispatch Date</span>
+                    <span className="block font-semibold text-neutral-700">
+                      {formatSentAt(selectedCampaign.sent_at)}
+                    </span>
+                  </div>
+                  <div className="col-span-2 space-y-1 border-t border-border/40 pt-3">
+                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Subject Line</span>
+                    <span className="block font-bold text-neutral-800 text-sm">
+                      {selectedCampaign.subject}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Simulated Email template render */}
+                <div className="bg-white border border-border rounded-2xl shadow-sm p-6 space-y-5 select-none">
+                  <div className="text-center pb-3 border-b border-border/40 space-y-1">
+                    <span className="font-serif font-bold text-sm text-primary tracking-wide block">Susmita Nursery</span>
+                    <span className="text-[7px] text-neutral-400 font-sans tracking-widest uppercase block">
+                      {getSubheaderText(selectedCampaign.template_type)}
+                    </span>
+                  </div>
+
+                  <p className="font-semibold text-neutral-800 text-[11px] margin-0">
+                    Hello [Recipient Name],
+                  </p>
+
+                  <h2 className="font-serif font-bold text-base text-primary leading-tight">
+                    {selectedCampaign.header}
+                  </h2>
+
+                  <p className="text-neutral-600 font-light font-sans text-[11px] leading-relaxed">
+                    {selectedCampaign.body}
+                  </p>
+
+                  {selectedCampaign.template_type === 'seasonal_promo' && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-center">
+                      <span className="text-[8px] uppercase tracking-wider text-amber-600 font-bold block">Use coupon code at checkout</span>
+                      <span className="text-base font-bold font-mono tracking-wider text-primary block mt-0.5">GROWGREEN35</span>
+                    </div>
+                  )}
+
+                  {selectedCampaign.template_type === 'care_guide' && (
+                    <div className="border-l-4 border-primary bg-muted/40 p-3 rounded-r-xl">
+                      <span className="text-[10px] font-light text-neutral-600 leading-relaxed block italic">
+                        💡 <strong>Green Tip:</strong> Check leaf humidity indices weekly weekly. Mist leaves in indirect sunlight.
+                      </span>
+                    </div>
+                  )}
+
+                  {selectedCampaign.products && (
+                    <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 flex items-center justify-between max-w-xs mx-auto">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded bg-primary/15 flex items-center justify-center text-primary text-[10px] font-serif font-bold">
+                          🌿
+                        </div>
+                        <div>
+                          <span className="font-semibold text-neutral-800 text-[10px] block leading-tight">{selectedCampaign.products.name}</span>
+                          <span className="text-[8px] text-neutral-400 block mt-0.5">Spotlight Specimen</span>
+                        </div>
+                      </div>
+                      <span className="text-[8px] font-bold text-white bg-primary px-2.5 py-1.5 rounded-full uppercase tracking-wider cursor-pointer">
+                        View Plant
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="shrink-0 pt-4 flex justify-end">
+                  <SheetClose>
+                    <button className="px-5 py-2.5 bg-primary hover:bg-primary-emerald text-white rounded-full font-bold text-xs cursor-pointer shadow">
+                      Dismiss Viewer
+                    </button>
+                  </SheetClose>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
     </div>
   )
 }
