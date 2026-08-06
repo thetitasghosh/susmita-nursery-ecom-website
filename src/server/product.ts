@@ -75,6 +75,8 @@ export async function getProductsAction(): Promise<ProductResponse> {
       stock_quantity?: number
       reserved_quantity?: number
       featured?: boolean
+      amazon_link?: string
+      flipkart_link?: string
     }>).map((p) => ({
       id: p.id,
       name: p.name,
@@ -97,7 +99,9 @@ export async function getProductsAction(): Promise<ProductResponse> {
       stock_quantity: p.stock_quantity,
       reserved_quantity: p.reserved_quantity,
       featured: p.featured,
-      nestedItemIds: recMap[p.id] || []
+      nestedItemIds: recMap[p.id] || [],
+      amazonLink: p.amazon_link || '',
+      flipkartLink: p.flipkart_link || ''
     }))
 
     return { success: true, data: formatted }
@@ -138,6 +142,8 @@ export async function createProductAction(
       stock_quantity: 50,
       reserved_quantity: 0,
       featured: productInput.featured || false,
+      amazon_link: productInput.amazonLink || null,
+      flipkart_link: productInput.flipkartLink || null,
     }
 
     const { data, error } = await supabase
@@ -204,6 +210,8 @@ export async function updateProductAction(
     if (productInput.stock_quantity !== undefined) dbPayload.stock_quantity = productInput.stock_quantity
     if (productInput.reserved_quantity !== undefined) dbPayload.reserved_quantity = productInput.reserved_quantity
     if (productInput.featured !== undefined) dbPayload.featured = productInput.featured
+    if (productInput.amazonLink !== undefined) dbPayload.amazon_link = productInput.amazonLink
+    if (productInput.flipkartLink !== undefined) dbPayload.flipkart_link = productInput.flipkartLink
 
     const { data, error } = await supabase
       .from('products')

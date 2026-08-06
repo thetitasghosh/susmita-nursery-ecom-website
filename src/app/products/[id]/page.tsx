@@ -100,7 +100,7 @@ export default function ProductDetailPage({
 
   const pageUrl = typeof window !== 'undefined' ? window.location.href : `https://susmitanursery.com/products/${product.slug || product.id}`
   const scientific = product.scientificName ? ` (${product.scientificName})` : ''
-  
+
   const whatsappMessage = `Hello Susmita Nursery! I want to discuss and buy this plant:
 
 Plant Name: ${product.name}${scientific}
@@ -328,7 +328,7 @@ Product Link: ${pageUrl}`
       <div className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
-            
+
             {/* Left Column: Product Image Gallery */}
             <div className="lg:col-span-6 space-y-6">
               <motion.div
@@ -346,11 +346,23 @@ Product Link: ${pageUrl}`
                   className="object-cover group-hover:scale-102 transition-transform duration-700 ease-out"
                   priority
                 />
-                
+
                 {/* Category tag */}
                 <span className="absolute top-6 left-6 inline-flex items-center gap-1 px-3 py-1 bg-primary/15 border border-primary/25 backdrop-blur-md text-primary font-bold text-xs rounded-full uppercase tracking-wider">
                   {product.category}
                 </span>
+
+                {/* Wishlist button — floating top-right */}
+                <button
+                  onClick={() => toggleWishlist(product.id)}
+                  aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                  className={`absolute top-5 right-5 z-10 w-10 h-10 rounded-full border flex items-center justify-center cursor-pointer transition-all shadow-sm backdrop-blur-md ${wishlisted
+                    ? 'bg-rose-50 border-rose-300 text-rose-500 hover:bg-rose-100'
+                    : 'bg-white/80 border-border text-neutral-400 hover:text-rose-400 hover:border-rose-300'
+                    }`}
+                >
+                  <Heart className="w-4 h-4" fill={wishlisted ? 'currentColor' : 'none'} />
+                </button>
               </motion.div>
 
               {/* Thumbnails Gallery - Amazon / Flipkart Style */}
@@ -363,11 +375,10 @@ Product Link: ${pageUrl}`
                       <button
                         key={idx}
                         onClick={() => setSelectedImage(imgUrl)}
-                        className={`relative flex-shrink-0 w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all cursor-pointer group/thumb ${
-                          isSelected
-                            ? 'border-primary shadow-lg ring-2 ring-primary/40 scale-105'
-                            : 'border-border opacity-70 hover:opacity-100 hover:border-primary/50'
-                        }`}
+                        className={`relative flex-shrink-0 w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all cursor-pointer group/thumb ${isSelected
+                          ? 'border-primary shadow-lg ring-2 ring-primary/40 scale-105'
+                          : 'border-border opacity-70 hover:opacity-100 hover:border-primary/50'
+                          }`}
                       >
                         <Image
                           src={imgUrl}
@@ -393,7 +404,7 @@ Product Link: ${pageUrl}`
                 transition={{ duration: 0.5, delay: 0.15 }}
                 className="space-y-6"
               >
-                
+
                 {/* Heading Details */}
                 <div>
                   <div className="flex flex-wrap items-baseline gap-2.5 mb-2">
@@ -406,7 +417,7 @@ Product Link: ${pageUrl}`
                       </span>
                     )}
                   </div>
-                  
+
                   {/* Rating Validation */}
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-0.5">
@@ -435,7 +446,7 @@ Product Link: ${pageUrl}`
 
                 {/* Marketing description */}
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed font-light border-t border-border/40 pt-4 font-sans">
-                  {product.id === '00000000-0000-0000-0000-000000000006' 
+                  {product.id === '00000000-0000-0000-0000-000000000006'
                     ? "A tropical beauty known for its iconic split leaves. Perfect for modern interiors and improves air quality."
                     : product.description}
                 </p>
@@ -462,7 +473,7 @@ Product Link: ${pageUrl}`
                 {/* Purchase Funnel UI */}
                 <div className="space-y-4 pt-2">
                   <div className="flex flex-col sm:flex-row gap-4 items-center">
-                    
+
                     {/* Size Selector */}
                     {product.sizes.length > 0 && (
                       <div className="w-full sm:w-auto flex flex-col gap-2">
@@ -472,11 +483,10 @@ Product Link: ${pageUrl}`
                             <button
                               key={size}
                               onClick={() => setSelectedSize(size)}
-                              className={`px-4 py-2 text-xs rounded-full border cursor-pointer font-bold transition-all ${
-                                selectedSize === size
-                                  ? 'bg-primary/10 border-primary text-primary'
-                                  : 'bg-white hover:bg-muted border-border text-neutral-500'
-                              }`}
+                              className={`px-4 py-2 text-xs rounded-full border cursor-pointer font-bold transition-all ${selectedSize === size
+                                ? 'bg-primary/10 border-primary text-primary'
+                                : 'bg-white hover:bg-muted border-border text-neutral-500'
+                                }`}
                             >
                               {size}
                             </button>
@@ -507,8 +517,8 @@ Product Link: ${pageUrl}`
 
                   </div>
 
-                  {/* CTAs */}
-                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  {/* CTAs — clean 2-column grid */}
+                  <div className="grid grid-cols-2 gap-3 pt-2">
                     <Button
                       size="lg"
                       onClick={handleAddToCart}
@@ -517,7 +527,7 @@ Product Link: ${pageUrl}`
                       <ShoppingCart className="w-4 h-4" />
                       <span>Add to Cart</span>
                     </Button>
-                    
+
                     <a
                       href={whatsappUrl}
                       target="_blank"
@@ -534,18 +544,57 @@ Product Link: ${pageUrl}`
                         <span>Discuss & Buy</span>
                       </Button>
                     </a>
-
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      onClick={() => toggleWishlist(product.id)}
-                      className={`w-full sm:w-14 rounded-full border border-border flex items-center justify-center cursor-pointer transition-all py-6 sm:py-0 ${
-                        wishlisted ? 'bg-primary/10 border-primary text-primary hover:bg-primary/20' : 'bg-white hover:bg-muted text-foreground'
-                      }`}
-                    >
-                      <Heart className="w-5 h-5" fill={wishlisted ? 'currentColor' : 'none'} />
-                    </Button>
                   </div>
+
+                  {/* Marketplace Buttons: Amazon & Flipkart */}
+                  {(product.amazonLink || product.flipkartLink) && (
+                    <div className="grid grid-cols-2 gap-3">
+                      {product.amazonLink && (
+                        <a
+                          href={product.amazonLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1"
+                        >
+                          <Button
+                            size="lg"
+                            className="w-full bg-white hover:bg-white text-[#131921] font-bold rounded-full py-6 cursor-pointer shadow-md border border-[#e6c87a] transition-all flex items-center justify-center gap-2.5"
+                          >
+                            <Image
+                              src="/logos/amazon-icon.png"
+                              alt="Amazon"
+                              width={24}
+                              height={24}
+                              className="object-contain rounded-sm"
+                            />
+                            <span>Buy on Amazon</span>
+                          </Button>
+                        </a>
+                      )}
+                      {product.flipkartLink && (
+                        <a
+                          href={product.flipkartLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1"
+                        >
+                          <Button
+                            size="lg"
+                            className="w-full bg-[#FFD000] hover:bg-[#f0c400] text-[#1B2A5C] font-bold rounded-full py-6 cursor-pointer shadow-md transition-all flex items-center justify-center gap-2.5"
+                          >
+                            <Image
+                              src="/logos/flipcart-icon.png"
+                              alt="Flipkart"
+                              width={24}
+                              height={24}
+                              className="object-contain rounded-sm"
+                            />
+                            <span>Buy on Flipkart</span>
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  )}
 
                   {/* Purchase Funnel Trust Badges */}
                   <div className="grid grid-cols-3 gap-3 border-t border-border/40 pt-5">
@@ -586,12 +635,12 @@ Product Link: ${pageUrl}`
                   The Brand Care System Component
                 </h2>
               </div>
-              
+
               {/* Dynamic PDF / PNG Care Guide & QR Card Generator button */}
-              <Button 
+              <Button
                 onClick={handleDownloadCareGuide}
                 disabled={isGeneratingGuide}
-                variant="outline" 
+                variant="outline"
                 className="border-primary text-primary hover:bg-primary/5 rounded-full px-6 flex items-center gap-2 cursor-pointer text-xs font-semibold"
               >
                 <Download size={13} className={isGeneratingGuide ? "animate-bounce" : ""} />
@@ -601,7 +650,7 @@ Product Link: ${pageUrl}`
 
             {/* Lifecycle Stages Navigator */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              
+
               {/* Left Side: 5 Stages Buttons */}
               <div className="lg:col-span-4 flex flex-row lg:flex-col gap-2.5 overflow-x-auto pb-2 lg:pb-0">
                 {careStages.map((stage, idx) => {
@@ -610,11 +659,10 @@ Product Link: ${pageUrl}`
                     <button
                       key={idx}
                       onClick={() => setActiveCareStage(idx)}
-                      className={`flex items-center gap-4 px-5 py-4 rounded-2xl border text-left cursor-pointer transition-all whitespace-nowrap lg:whitespace-normal w-full min-w-[160px] lg:min-w-0 ${
-                        isActive 
-                          ? 'border-primary bg-primary/10 font-bold text-primary shadow-sm'
-                          : 'border-border bg-background hover:bg-muted text-neutral-500 font-light'
-                      }`}
+                      className={`flex items-center gap-4 px-5 py-4 rounded-2xl border text-left cursor-pointer transition-all whitespace-nowrap lg:whitespace-normal w-full min-w-[160px] lg:min-w-0 ${isActive
+                        ? 'border-primary bg-primary/10 font-bold text-primary shadow-sm'
+                        : 'border-border bg-background hover:bg-muted text-neutral-500 font-light'
+                        }`}
                     >
                       <span className={`w-7 h-7 rounded-full flex items-center justify-center font-sans text-xs font-semibold ${isActive ? 'bg-primary text-white' : 'bg-muted text-neutral-500'}`}>
                         {stage.stage}

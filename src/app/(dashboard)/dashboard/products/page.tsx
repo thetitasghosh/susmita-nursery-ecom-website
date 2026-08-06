@@ -162,6 +162,10 @@ export default function ProductsPage() {
   const [nestedTools, setNestedTools] = useState<string[]>([])
   const [nestedMedicines, setNestedMedicines] = useState<string[]>([])
 
+  // Marketplace links
+  const [formAmazonLink, setFormAmazonLink] = useState('')
+  const [formFlipkartLink, setFormFlipkartLink] = useState('')
+
   // Load products from Supabase database with fallback to local definitions
   const loadProducts = async () => {
     setLoading(true)
@@ -246,6 +250,8 @@ export default function ProductsPage() {
     setMedSearch('')
     setToolDropdownOpen(false)
     setMedDropdownOpen(false)
+    setFormAmazonLink('')
+    setFormFlipkartLink('')
     
     setIsSheetOpen(true)
   }
@@ -280,6 +286,8 @@ export default function ProductsPage() {
     setMedSearch('')
     setToolDropdownOpen(false)
     setMedDropdownOpen(false)
+    setFormAmazonLink(product.amazonLink || '')
+    setFormFlipkartLink(product.flipkartLink || '')
 
     setIsSheetOpen(true)
   }
@@ -371,7 +379,9 @@ export default function ProductsPage() {
         },
         sizes: formSizes,
         careInstructions: formCareInstructions,
-        nestedItemIds: [...nestedTools, ...nestedMedicines]
+        nestedItemIds: [...nestedTools, ...nestedMedicines],
+        amazonLink: formAmazonLink.trim() || undefined,
+        flipkartLink: formFlipkartLink.trim() || undefined
       }
 
       if (editingProduct) {
@@ -1207,6 +1217,45 @@ export default function ProductsPage() {
                       <p className="text-[10px] text-neutral-400 italic font-light">No medicines recommended yet.</p>
                     )}
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* External Marketplace Links */}
+            <div className="space-y-4 border-t border-border/40 pt-6">
+              <div className="flex items-center gap-2 mb-1">
+                <LinkIcon size={15} className="text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Marketplace Links</h3>
+              </div>
+              <p className="text-[11px] text-muted-foreground font-light leading-relaxed">
+                Optional: paste direct product listing URLs for Amazon and Flipkart. These will display as purchase buttons on the public product page.
+              </p>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#FF9900] text-[8px] font-black text-black">A</span>
+                    Amazon Link
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://www.amazon.in/dp/..."
+                    value={formAmazonLink}
+                    onChange={e => setFormAmazonLink(e.target.value)}
+                    className="w-full bg-background border border-border/80 px-3.5 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#FF9900]/50 text-foreground"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-[#2874F0] text-[8px] font-black text-white">F</span>
+                    Flipkart Link
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://www.flipkart.com/..."
+                    value={formFlipkartLink}
+                    onChange={e => setFormFlipkartLink(e.target.value)}
+                    className="w-full bg-background border border-border/80 px-3.5 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#2874F0]/50 text-foreground"
+                  />
                 </div>
               </div>
             </div>

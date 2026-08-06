@@ -26,6 +26,8 @@ export interface Product {
   petFriendly?: string
   airPurifying?: string
   featured?: boolean
+  amazonLink?: string
+  flipkartLink?: string
 }
 
 export const allProducts: Product[] = [
