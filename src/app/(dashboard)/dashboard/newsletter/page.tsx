@@ -92,6 +92,76 @@ const initialCampaigns: Campaign[] = [
 export default function NewsletterPage() {
   const [activeTab, setActiveTab] = useState<'subscribers' | 'campaigns'>('subscribers')
   const [subscribers, setSubscribers] = useState<Subscriber[]>([])
+
+  const getThemeColors = (type: NewsletterTemplateType) => {
+    switch (type) {
+      case 'care_guide':
+        return {
+          primary: '#027846',
+          accent: '#73b22c',
+          light: '#f0fdf4',
+          border: '#dcfce7'
+        }
+      case 'seasonal_promo':
+        return {
+          primary: '#027846',
+          accent: '#ffcf02',
+          light: '#fffbeb',
+          border: '#fef3c7'
+        }
+      case 'new_arrivals':
+        return {
+          primary: '#007947',
+          accent: '#73b22c',
+          light: '#f0fdf4',
+          border: '#dcfce7'
+        }
+      case 'wishlist_restock':
+        return {
+          primary: '#027846',
+          accent: '#ffcf02',
+          light: '#f9fafb',
+          border: '#e5e7eb'
+        }
+      default:
+        return {
+          primary: '#027846',
+          accent: '#73b22c',
+          light: '#f9fafb',
+          border: '#e5e7eb'
+        }
+    }
+  }
+
+  const getLogoUrl = (type: NewsletterTemplateType) => {
+    switch (type) {
+      case 'care_guide':
+        return '/logos/logo-with-ring.jpeg'
+      case 'seasonal_promo':
+        return '/logos/logo-with-typo.jpeg'
+      case 'new_arrivals':
+        return '/logos/logo-with-vertical-typo.jpeg'
+      case 'wishlist_restock':
+        return '/logos/logo-sn.jpeg'
+      default:
+        return '/logos/logo-sn.jpeg'
+    }
+  }
+
+  const getLogoHeight = (type: NewsletterTemplateType) => {
+    switch (type) {
+      case 'care_guide':
+        return 80
+      case 'seasonal_promo':
+        return 72
+      case 'new_arrivals':
+        return 85
+      case 'wishlist_restock':
+        return 80
+      default:
+        return 76
+    }
+  }
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isComposeOpen, setIsComposeOpen] = useState(false)
@@ -113,6 +183,8 @@ export default function NewsletterPage() {
   
   // List of all products to select from
   const [productList, setProductList] = useState<Product[]>([])
+  const [productSearch, setProductSearch] = useState('')
+  const [productDropdownOpen, setProductDropdownOpen] = useState(false)
 
   const loadSubscribers = async () => {
     try {
@@ -215,9 +287,17 @@ export default function NewsletterPage() {
         setSubject('Good News: A plant you loved is back in stock!')
         setEmailHeader('Back in Stock Alert')
         setEmailBody('Great news! We have successfully restocked our greenhouse reserves for one of our highest-rated garden specimens. Tap below to reserve yours for in-store pickup before stocks dry out.')
-        break
     }
   }, [templateType])
+
+  // Sync featuredProduct selection with search text field
+  useEffect(() => {
+    if (featuredProduct) {
+      setProductSearch(featuredProduct.name)
+    } else {
+      setProductSearch('')
+    }
+  }, [featuredProduct])
 
   // Toggle active
   const toggleStatus = async (id: string, email: string, currentActive: boolean) => {
@@ -661,20 +741,108 @@ export default function NewsletterPage() {
                 </div>
               )}
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative">
                 <label className="font-semibold text-neutral-700">Spotlight Highlight Product</label>
-                <select
-                  value={featuredProduct ? featuredProduct.id : ''}
-                  onChange={(e) => {
-                    const match = productList.find(p => p.id === e.target.value)
-                    if (match) setFeaturedProduct(match)
-                  }}
-                  className="w-full bg-white border border-border/80 px-3 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary text-foreground text-xs"
-                >
-                  {productList.map(prod => (
-                    <option key={prod.id} value={prod.id}>{prod.name} (₹{prod.price})</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <div className="relative flex-1">
+                    <Search size={14} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+                    <input
+                      type="text"
+                      placeholder="Search catalog products..."
+                      value={productSearch}
+                      onChange={(e) => {
+                        setProductSearch(e.target.value)
+                        setProductDropdownOpen(true)
+                      }}
+                      onFocus={() => setProductDropdownOpen(true)}
+                      className="w-full bg-white border border-border/80 pl-9 pr-8 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary text-foreground font-semibold"
+                    />
+                    {featuredProduct && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFeaturedProduct(null)
+                          setProductSearch('')
+                        }}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-red-500 font-bold text-xs"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {productDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1.5 bg-white border border-border/80 rounded-2xl shadow-xl max-h-48 overflow-y-auto p-1.5 space-y-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFeaturedProduct(null)
+                          setProductSearch('')
+                          setProductDropdownOpen(false)
+                        }}
+                        className="w-full text-left p-2 hover:bg-muted/60 rounded-xl transition-all text-[11px] font-semibold text-neutral-500 italic"
+                      >
+                        None (No spotlight product)
+                      </button>
+                      {productList
+                        .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
+                        .map(prod => (
+                          <button
+                            type="button"
+                            key={prod.id}
+                            onClick={() => {
+                              setFeaturedProduct(prod)
+                              setProductSearch(prod.name)
+                              setProductDropdownOpen(false)
+                            }}
+                            className="w-full text-left flex items-center gap-3 p-2 hover:bg-muted/60 rounded-xl transition-all"
+                          >
+                            <span className="w-8 h-8 border border-border rounded-lg overflow-hidden relative inline-block shrink-0 bg-muted">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={prod.image} alt={prod.name} className="object-cover w-full h-full" />
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <span className="font-semibold text-neutral-800 text-xs block truncate">{prod.name}</span>
+                              <span className="text-[10px] text-neutral-400 block font-light">₹{prod.price} • {prod.category}</span>
+                            </div>
+                          </button>
+                        ))}
+                      {productList.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
+                        <p className="text-[10px] text-neutral-400 p-3 italic text-center">No catalog products found</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Click outside to close overlay */}
+                {productDropdownOpen && (
+                  <div className="fixed inset-0 z-40" onClick={() => setProductDropdownOpen(false)} />
+                )}
+
+                {featuredProduct && (
+                  <div className="bg-muted/30 border border-border/40 p-3 rounded-2xl flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-8 h-8 border border-border rounded-lg overflow-hidden relative inline-block shrink-0 bg-white">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={featuredProduct.image} alt={featuredProduct.name} className="object-cover w-full h-full" />
+                      </span>
+                      <div className="min-w-0">
+                        <span className="font-bold text-neutral-700 text-xs block truncate">{featuredProduct.name}</span>
+                        <span className="text-[10px] text-neutral-400 block font-light">Active Selected Spotlight • ₹{featuredProduct.price}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFeaturedProduct(null)
+                        setProductSearch('')
+                      }}
+                      className="text-red-500 hover:text-red-700 p-1 font-bold text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 border-t border-border/40 space-y-1.5">
@@ -727,65 +895,76 @@ export default function NewsletterPage() {
                 </div>
 
                 {/* Email Template content */}
-                <div className="p-8 space-y-6">
-                  <div className="text-center pb-4 border-b border-border/40 space-y-1">
-                    <span className="font-serif font-bold text-base text-primary tracking-wide block">Susmita Nursery</span>
-                    <span className="text-[8px] text-neutral-400 font-sans tracking-widest uppercase block">
+                <div className="flex-1 flex flex-col bg-white">
+                  {/* Header Banner - Branded Background & Logo */}
+                  <div style={{ borderTop: `4px solid ${getThemeColors(templateType).primary}` }} className="py-7 px-6 text-center select-none bg-white border-b border-neutral-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={getLogoUrl(templateType)} 
+                      alt="Susmita Nursery Logo" 
+                      style={{ height: `${getLogoHeight(templateType)}px` }}
+                      className="mx-auto block object-contain"
+                    />
+                    <span className="text-[9px] uppercase tracking-wider font-bold block mt-2 text-neutral-500">
                       {getSubheaderText(templateType)}
                     </span>
                   </div>
 
-                  {/* Personalized Greeting */}
-                  <p className="font-semibold text-neutral-800 text-xs margin-0">
-                    Hello {(!previewName || previewName.toLowerCase().includes('nursery client')) ? 'Plant Lover' : previewName.trim().split(' ')[0]},
-                  </p>
+                  <div className="p-8 space-y-6">
+                    {/* Personalized Greeting */}
+                    <p className="font-semibold text-neutral-800 text-xs margin-0">
+                      Hello {(!previewName || previewName.toLowerCase().includes('nursery client')) ? 'Plant Lover' : previewName.trim().split(' ')[0]},
+                    </p>
 
-                  <h2 className="font-serif font-bold text-lg text-primary leading-tight pt-1">
-                    {emailHeader}
-                  </h2>
+                    <h2 style={{ color: getThemeColors(templateType).primary }} className="font-serif font-bold text-lg leading-tight pt-1">
+                      {emailHeader}
+                    </h2>
 
-                  <p className="text-neutral-600 font-light font-sans text-xs leading-relaxed">
-                    {emailBody}
-                  </p>
+                    <p className="text-neutral-600 font-light font-sans text-xs leading-relaxed">
+                      {emailBody}
+                    </p>
 
-                  {templateType === 'seasonal_promo' && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center space-y-1.5">
-                      <span className="text-[9px] uppercase tracking-wider text-amber-600 font-bold block">Use promo code at checkout</span>
-                      <span className="text-xl font-bold font-mono tracking-wider text-primary block">{promoCode}</span>
-                      <span className="text-[9px] text-neutral-400 block">Apply code to receive seasonal discounts on your reservations.</span>
-                    </div>
-                  )}
-
-                  {templateType === 'care_guide' && (
-                    <div className="border-l-4 border-primary bg-muted/40 p-3.5 rounded-r-xl">
-                      <span className="text-[11px] font-light text-neutral-600 leading-relaxed block italic">
-                        💡 <strong>Green Tip:</strong> Check leaf humidity indices weekly. Specimen health is heavily impacted by draft parameters and temperature fluctuations. Make sure to mist leaves in indirect sunlight.
-                      </span>
-                    </div>
-                  )}
-
-                  {featuredProduct && (
-                    <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex items-center justify-between max-w-xs mx-auto">
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-lg overflow-hidden border border-border/60 relative bg-white">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={featuredProduct.image} alt={featuredProduct.name} className="object-cover w-full h-full" />
-                        </div>
-                        <div>
-                          <span className="font-semibold text-neutral-800 text-[11px] block leading-tight">{featuredProduct.name}</span>
-                          <span className="text-[9px] text-neutral-400 block mt-0.5">₹{featuredProduct.price.toFixed(2)}</span>
-                        </div>
+                    {templateType === 'seasonal_promo' && (
+                      <div style={{ backgroundColor: getThemeColors(templateType).light, borderColor: getThemeColors(templateType).border }} className="border-2 border-dashed rounded-2xl p-6 text-center space-y-2">
+                        <span style={{ backgroundColor: getThemeColors(templateType).primary }} className="text-[8px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-full text-white inline-block">
+                          Promo Coupon Offer
+                        </span>
+                        <span style={{ color: getThemeColors(templateType).primary }} className="text-2xl font-black font-mono tracking-widest block">{promoCode}</span>
+                        <span className="text-[9px] text-neutral-400 block leading-normal">Present this coupon code at our counter pickup desk to redeem your nursery discount.</span>
                       </div>
-                      <span className="text-[9px] font-bold text-white bg-primary px-3 py-1.5 rounded-full uppercase tracking-wider shrink-0 cursor-pointer">
-                        {templateType === 'wishlist_restock' ? 'Buy Now' : 'Shop Specimen'}
-                      </span>
-                    </div>
-                  )}
+                    )}
 
-                  <div className="border-t border-border/40 pt-6 text-center text-[9px] text-neutral-400 font-sans space-y-1">
-                    <p>© 2026 Susmita Nursery. Cultivating Green Companions.</p>
-                    <p className="font-light">Gangni , Badkulla , Nadia , 741121 , W.B.</p>
-                    <p className="pt-2"><span className="underline hover:text-neutral-600 cursor-pointer">Unsubscribe from this mailing list</span></p>
+                    {templateType === 'care_guide' && (
+                      <div style={{ borderLeftColor: getThemeColors(templateType).accent }} className="border-l-4 bg-neutral-50/50 p-4 rounded-r-2xl">
+                        <span className="text-[11px] font-light text-neutral-700 leading-relaxed block italic">
+                          💡 <strong style={{ color: getThemeColors(templateType).primary }}>Horticultural Guide:</strong> Check leaf humidity indices weekly. Specimen health is heavily impacted by draft parameters and temperature fluctuations. Mist leaves in indirect sunlight.
+                        </span>
+                      </div>
+                    )}
+
+                    {featuredProduct && (
+                      <div style={{ backgroundColor: '#ffffff', borderColor: '#e4e4e7' }} className="border rounded-2xl p-4 flex items-center justify-between max-w-sm mx-auto shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-lg overflow-hidden border border-border/60 relative bg-white shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={featuredProduct.image} alt={featuredProduct.name} className="object-cover w-full h-full" />
+                          </div>
+                          <div>
+                            <span style={{ color: getThemeColors(templateType).primary }} className="text-[8px] uppercase tracking-wider font-bold block mb-0.5">🌿 Featured Specimen</span>
+                            <span className="font-semibold text-neutral-800 text-[11px] block leading-tight">{featuredProduct.name}</span>
+                            <span className="text-[9px] text-neutral-400 block mt-0.5">₹{featuredProduct.price.toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <span style={{ backgroundColor: getThemeColors(templateType).primary }} className="text-[9px] font-bold text-white px-3 py-1.5 rounded-full uppercase tracking-wider shrink-0 cursor-pointer shadow-sm">
+                          {templateType === 'wishlist_restock' ? 'Buy Now' : 'Shop Specimen'}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="border-t border-border/40 pt-6 text-center text-[9px] text-neutral-400 font-sans space-y-1">
+                      <p className="font-bold text-neutral-600">© 2026 Susmita Nursery. All rights reserved.</p>
+                      <p className="font-light">Gangni, Badkulla, Nadia, West Bengal, 741121</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -847,59 +1026,68 @@ export default function NewsletterPage() {
                     </span>
                   </div>
                 </div>
-
-                {/* Simulated Email template render */}
-                <div className="bg-white border border-border rounded-2xl shadow-sm p-6 space-y-5 select-none">
-                  <div className="text-center pb-3 border-b border-border/40 space-y-1">
-                    <span className="font-serif font-bold text-sm text-primary tracking-wide block">Susmita Nursery</span>
-                    <span className="text-[7px] text-neutral-400 font-sans tracking-widest uppercase block">
+                 {/* Simulated Email template render */}
+                <div className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col select-none">
+                  {/* Header Banner - Branded Background & Logo */}
+                  <div style={{ borderTop: `4px solid ${getThemeColors(selectedCampaign.template_type).primary}` }} className="py-5 px-5 text-center bg-white border-b border-neutral-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={getLogoUrl(selectedCampaign.template_type)} 
+                      alt="Susmita Nursery Logo" 
+                      style={{ height: `${getLogoHeight(selectedCampaign.template_type)}px` }}
+                      className="mx-auto block object-contain"
+                    />
+                    <span className="text-[8px] uppercase tracking-wider font-bold block mt-1.5 text-neutral-500">
                       {getSubheaderText(selectedCampaign.template_type)}
                     </span>
                   </div>
 
-                  <p className="font-semibold text-neutral-800 text-[11px] margin-0">
-                    Hello [Recipient Name],
-                  </p>
+                  <div className="p-6 space-y-5">
+                    {/* Personalized Greeting */}
+                    <p className="font-semibold text-neutral-800 text-[10px] margin-0">
+                      Hello [Recipient Name],
+                    </p>
 
-                  <h2 className="font-serif font-bold text-base text-primary leading-tight">
-                    {selectedCampaign.header}
-                  </h2>
+                    <h2 style={{ color: getThemeColors(selectedCampaign.template_type).primary }} className="font-serif font-bold text-sm leading-tight">
+                      {selectedCampaign.header}
+                    </h2>
 
-                  <p className="text-neutral-600 font-light font-sans text-[11px] leading-relaxed">
-                    {selectedCampaign.body}
-                  </p>
+                    <p className="text-neutral-600 font-light font-sans text-[10px] leading-relaxed">
+                      {selectedCampaign.body}
+                    </p>
 
-                  {selectedCampaign.template_type === 'seasonal_promo' && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-center">
-                      <span className="text-[8px] uppercase tracking-wider text-amber-600 font-bold block">Use coupon code at checkout</span>
-                      <span className="text-base font-bold font-mono tracking-wider text-primary block mt-0.5">GROWGREEN35</span>
-                    </div>
-                  )}
-
-                  {selectedCampaign.template_type === 'care_guide' && (
-                    <div className="border-l-4 border-primary bg-muted/40 p-3 rounded-r-xl">
-                      <span className="text-[10px] font-light text-neutral-600 leading-relaxed block italic">
-                        💡 <strong>Green Tip:</strong> Check leaf humidity indices weekly weekly. Mist leaves in indirect sunlight.
-                      </span>
-                    </div>
-                  )}
-
-                  {selectedCampaign.products && (
-                    <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 flex items-center justify-between max-w-xs mx-auto">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-primary/15 flex items-center justify-center text-primary text-[10px] font-serif font-bold">
-                          🌿
-                        </div>
-                        <div>
-                          <span className="font-semibold text-neutral-800 text-[10px] block leading-tight">{selectedCampaign.products.name}</span>
-                          <span className="text-[8px] text-neutral-400 block mt-0.5">Spotlight Specimen</span>
-                        </div>
+                    {selectedCampaign.template_type === 'seasonal_promo' && (
+                      <div style={{ backgroundColor: getThemeColors(selectedCampaign.template_type).light, borderColor: getThemeColors(selectedCampaign.template_type).border }} className="border rounded-xl p-3 text-center space-y-1">
+                        <span style={{ color: getThemeColors(selectedCampaign.template_type).primary }} className="text-[8px] uppercase tracking-wider font-bold block">Use coupon code at checkout</span>
+                        <span style={{ color: getThemeColors(selectedCampaign.template_type).primary }} className="text-base font-bold font-mono tracking-wider block">GROWGREEN35</span>
                       </div>
-                      <span className="text-[8px] font-bold text-white bg-primary px-2.5 py-1.5 rounded-full uppercase tracking-wider cursor-pointer">
-                        View Plant
-                      </span>
-                    </div>
-                  )}
+                    )}
+
+                    {selectedCampaign.template_type === 'care_guide' && (
+                      <div style={{ borderLeftColor: getThemeColors(selectedCampaign.template_type).accent }} className="border-l-4 bg-muted/40 p-3 rounded-r-xl">
+                        <span className="text-[10px] font-light text-neutral-600 leading-relaxed block italic">
+                          💡 <strong style={{ color: getThemeColors(selectedCampaign.template_type).primary }}>Green Tip:</strong> Check leaf humidity indices weekly. Mist leaves in indirect sunlight.
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedCampaign.products && (
+                      <div style={{ backgroundColor: getThemeColors(selectedCampaign.template_type).light, borderColor: getThemeColors(selectedCampaign.template_type).border }} className="border rounded-xl p-3 flex items-center justify-between max-w-xs mx-auto">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded bg-white border border-border/40 flex items-center justify-center text-primary text-[10px] font-serif font-bold">
+                            🌿
+                          </div>
+                          <div>
+                            <span className="font-semibold text-neutral-800 text-[10px] block leading-tight">{selectedCampaign.products.name}</span>
+                            <span className="text-[8px] text-neutral-400 block mt-0.5">Spotlight Specimen</span>
+                          </div>
+                        </div>
+                        <span style={{ backgroundColor: getThemeColors(selectedCampaign.template_type).primary }} className="text-[8px] font-bold text-white bg-primary px-2.5 py-1.5 rounded-full uppercase tracking-wider cursor-pointer">
+                          View Plant
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="shrink-0 pt-4 flex justify-end">
