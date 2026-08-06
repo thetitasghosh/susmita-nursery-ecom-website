@@ -19,7 +19,8 @@ import {
   LogOut,
   ShoppingBag,
   User,
-  Sprout
+  Sprout,
+  Sparkles
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -41,6 +42,7 @@ interface AdminUserInfo {
 const sidebarItems: SidebarItem[] = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Products', href: '/dashboard/products', icon: Boxes },
+  { name: 'AI Catalog', href: '/dashboard/products/ai-generator', icon: Sparkles },
   { name: 'Banners', href: '/dashboard/banners', icon: ImageIcon },
   { name: 'Inventory', href: '/dashboard/inventory', icon: Boxes },
   { name: 'Orders', href: '/dashboard/orders', icon: Receipt },
@@ -311,8 +313,18 @@ export default function DashboardLayout({
                   )}
                 />
                 {!isSidebarCollapsed && <span>{item.name}</span>}
-                {!isSidebarCollapsed && isActive && (
+                {!isSidebarCollapsed && isActive && item.name !== 'AI Catalog' && (
                   <div className="ml-auto w-1.5 h-1.5 bg-secondary rounded-full" />
+                )}
+                {!isSidebarCollapsed && item.name === 'AI Catalog' && (
+                  <span className={cn(
+                    "text-[7px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded ml-auto shrink-0",
+                    isActive 
+                      ? "bg-secondary text-primary font-black animate-pulse" 
+                      : "bg-amber-500/15 text-amber-400 border border-amber-500/25"
+                  )}>
+                    Soon
+                  </span>
                 )}
               </Link>
             )
@@ -415,14 +427,26 @@ export default function DashboardLayout({
                   href={item.href} 
                   onClick={() => setIsMobileOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer",
+                    "flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer",
                     isActive
                       ? 'bg-primary text-white font-bold'
                       : 'text-neutral-400 hover:bg-white/5 hover:text-white'
                   )}
                 >
-                  <item.icon className={isActive ? 'text-secondary' : 'text-neutral-400'} size={18} />
-                  <span>{item.name}</span>
+                  <div className="flex items-center gap-3">
+                    <item.icon className={isActive ? 'text-secondary' : 'text-neutral-400'} size={18} />
+                    <span>{item.name}</span>
+                  </div>
+                  {item.name === 'AI Catalog' && (
+                    <span className={cn(
+                      "text-[7.5px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded shrink-0",
+                      isActive 
+                        ? "bg-secondary text-primary font-black" 
+                        : "bg-amber-500/15 text-amber-400 border border-amber-500/25"
+                    )}>
+                      Soon
+                    </span>
+                  )}
                 </Link>
               )
             })}
