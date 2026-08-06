@@ -6,20 +6,12 @@ import {
   UploadCloud, 
   Search, 
   Database, 
-  CheckCircle, 
-  ArrowRight, 
   Settings, 
-  HelpCircle, 
-  FileText, 
-  Image as ImageIcon,
-  Check,
-  Eye,
-  Info
+  Info,
+  Download
 } from 'lucide-react'
 import { getProductsAction } from '@/server/product'
 import { allProducts, Product } from '@/lib/products'
-
-type NewsletterTemplateType = 'care_guide' | 'seasonal_promo' | 'new_arrivals' | 'wishlist_restock'
 
 interface GeneratedAssets {
   cover: string
@@ -64,7 +56,6 @@ export default function AIGeneratorPage() {
   const [selectedPreset, setSelectedPreset] = useState<PlantPreset>(plantPresets[0])
   const [customName, setCustomName] = useState(plantPresets[0].name)
   const [targetSize, setTargetSize] = useState('Medium')
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [uploadPreview, setUploadPreview] = useState<string>(plantPresets[0].rawImage)
   
   // API settings
@@ -82,7 +73,6 @@ export default function AIGeneratorPage() {
   
   // Database linkage states
   const [catalogProducts, setCatalogProducts] = useState<Product[]>([])
-  const [selectedProductId, setSelectedProductId] = useState('')
   const [productSearch, setProductSearch] = useState('')
   const [productDropdownOpen, setProductDropdownOpen] = useState(false)
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
@@ -99,7 +89,6 @@ export default function AIGeneratorPage() {
   useEffect(() => {
     setCustomName(selectedPreset.name)
     setUploadPreview(selectedPreset.rawImage)
-    setUploadedFile(null)
   }, [selectedPreset])
 
   // Load database products
@@ -134,7 +123,6 @@ export default function AIGeneratorPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
-      setUploadedFile(file)
       setUploadPreview(URL.createObjectURL(file))
     }
   }
@@ -178,6 +166,48 @@ export default function AIGeneratorPage() {
     setTimeout(() => setToastMessage(null), 4000)
   }
 
+  const downloadImage = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(blobUrl)
+      showToast(`Downloaded "${filename}"!`, 'success')
+    } catch {
+      // Fallback anchor behavior
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      link.target = '_blank'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      showToast(`Started download for "${filename}"!`, 'success')
+    }
+  }
+
+  const downloadAllAssets = () => {
+    if (!assets) return
+    const filePairs = [
+      { url: assets.cover, name: `${selectedPreset.prefix}-cover.png` },
+      { url: assets.dimension, name: `${selectedPreset.prefix}-dimension.png` },
+      { url: assets.feature, name: `${selectedPreset.prefix}-feature.png` },
+      { url: assets.lifestyle, name: `${selectedPreset.prefix}-lifestyle.png` }
+    ]
+    filePairs.forEach((pair, idx) => {
+      setTimeout(() => {
+        downloadImage(pair.url, pair.name)
+      }, idx * 300)
+    })
+    showToast('Dispatched download queue for all 4 assets!', 'success')
+  }
+
   const saveApiKey = (key: string) => {
     setOpenaiKey(key)
     if (key.trim()) {
@@ -197,7 +227,7 @@ export default function AIGeneratorPage() {
 
     try {
       const stored = localStorage.getItem('nursery_products')
-      let list: any[] = []
+      let list: Product[] = []
       if (stored) {
         list = JSON.parse(stored)
       } else {
@@ -205,7 +235,7 @@ export default function AIGeneratorPage() {
       }
 
       // Update product item fields
-      const updated = list.map((p: any) => {
+      const updated = list.map((p: Product) => {
         if (p.id === prod.id) {
           return {
             ...p,
@@ -231,7 +261,7 @@ export default function AIGeneratorPage() {
 
     try {
       const stored = localStorage.getItem('nursery_products')
-      let list: any[] = []
+      let list: Product[] = []
       if (stored) {
         list = JSON.parse(stored)
       } else {
@@ -239,18 +269,29 @@ export default function AIGeneratorPage() {
       }
 
       const newId = `ai_${Date.now()}`
-      const newProductItem = {
+      const newProductItem: Product = {
         id: newId,
         name: customName,
         category: 'Indoor Plants',
         price: 349,
+        rating: 5.0,
+        reviews: 1,
         image: assets.cover,
         description: selectedPreset.description,
         difficulty: 'Easy',
-        light: 'Bright indirect light',
-        water: 'Water weekly when soil is dry',
-        supportingImages: [assets.dimension, assets.feature, assets.lifestyle],
-        sizes: [targetSize]
+        details: {
+          light: 'Bright indirect light',
+          water: 'Water weekly when soil is dry',
+          humidity: 'Moderate',
+          temperature: '65-80°F',
+          soil: 'Well-draining potting mix'
+        },
+        sizes: [targetSize],
+        careInstructions: [
+          'Keep in bright, indirect sunlight.',
+          'Water only when topsoil is dry to touch.',
+          'Prune dead or yellowing leaves to promote new foliage.'
+        ]
       }
 
       const updated = [newProductItem, ...list]
@@ -496,10 +537,22 @@ export default function AIGeneratorPage() {
               
               {/* Database Link Actions Card */}
               <div className="bg-gradient-to-br from-white to-neutral-50/50 border border-neutral-100 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] space-y-4">
-                <div className="flex items-center gap-2">
-                  <Database className="text-primary" size={18} />
-                  <h3 className="text-sm font-bold text-neutral-800">Add to Product Sheet</h3>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <Database className="text-primary" size={18} />
+                    <h3 className="text-sm font-bold text-neutral-800">Add to Product Sheet</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={downloadAllAssets}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary/95 text-white text-[11px] font-bold transition-all shadow-md shadow-primary/10 hover:shadow-primary/20 cursor-pointer whitespace-nowrap"
+                    title="Download all 4 assets at once"
+                  >
+                    <Download size={12} />
+                    <span>Download All Assets</span>
+                  </button>
                 </div>
+
                 <p className="text-xs text-neutral-400 font-light leading-relaxed">
                   Directly bind this generated asset set (cover photo + supporting details) into your main catalogue sheets.
                 </p>
@@ -583,6 +636,17 @@ export default function AIGeneratorPage() {
                     <span className="absolute top-4 left-4 bg-primary text-white text-[8px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
                       1. Studio Cover Cutout
                     </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        downloadImage(assets.cover, `${selectedPreset.prefix}-cover.png`)
+                      }}
+                      className="absolute top-4 right-4 bg-white/95 hover:bg-white text-primary p-2 rounded-xl border border-neutral-200/40 hover:scale-105 transition-all shadow-sm cursor-pointer z-10"
+                      title="Download Cover Image"
+                    >
+                      <Download size={12} />
+                    </button>
                   </div>
                   <div className="p-5 space-y-1">
                     <span className="text-[10px] text-neutral-400 uppercase tracking-wide font-bold">Catalog Profile</span>
@@ -599,6 +663,17 @@ export default function AIGeneratorPage() {
                     <span className="absolute top-4 left-4 bg-primary text-white text-[8px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
                       2. Measurement Specs
                     </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        downloadImage(assets.dimension, `${selectedPreset.prefix}-dimension.png`)
+                      }}
+                      className="absolute top-4 right-4 bg-white/95 hover:bg-white text-primary p-2 rounded-xl border border-neutral-200/40 hover:scale-105 transition-all shadow-sm cursor-pointer z-10"
+                      title="Download Dimension Image"
+                    >
+                      <Download size={12} />
+                    </button>
                   </div>
                   <div className="p-5 space-y-1">
                     <span className="text-[10px] text-neutral-400 uppercase tracking-wide font-bold">Structural Sizing</span>
@@ -615,6 +690,17 @@ export default function AIGeneratorPage() {
                     <span className="absolute top-4 left-4 bg-primary text-white text-[8px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
                       3. Macro Close-up
                     </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        downloadImage(assets.feature, `${selectedPreset.prefix}-feature.png`)
+                      }}
+                      className="absolute top-4 right-4 bg-white/95 hover:bg-white text-primary p-2 rounded-xl border border-neutral-200/40 hover:scale-105 transition-all shadow-sm cursor-pointer z-10"
+                      title="Download Feature Image"
+                    >
+                      <Download size={12} />
+                    </button>
                   </div>
                   <div className="p-5 space-y-1">
                     <span className="text-[10px] text-neutral-400 uppercase tracking-wide font-bold">Botanical Quality</span>
@@ -631,6 +717,17 @@ export default function AIGeneratorPage() {
                     <span className="absolute top-4 left-4 bg-primary text-white text-[8px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
                       4. Interior Scene
                     </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        downloadImage(assets.lifestyle, `${selectedPreset.prefix}-lifestyle.png`)
+                      }}
+                      className="absolute top-4 right-4 bg-white/95 hover:bg-white text-primary p-2 rounded-xl border border-neutral-200/40 hover:scale-105 transition-all shadow-sm cursor-pointer z-10"
+                      title="Download Lifestyle Image"
+                    >
+                      <Download size={12} />
+                    </button>
                   </div>
                   <div className="p-5 space-y-1">
                     <span className="text-[10px] text-neutral-400 uppercase tracking-wide font-bold">Contextual Living</span>

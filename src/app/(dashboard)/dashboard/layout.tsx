@@ -25,6 +25,11 @@ import {
 import { cn } from '@/lib/utils'
 
 import { getAccountAction, signoutAction } from '@/server/auth'
+import { getProductsAction } from '@/server/product'
+import { getOrdersAction } from '@/server/order'
+import { getUsersAction } from '@/server/user'
+import { getSubscribersAction } from '@/server/newsletter'
+import { allProducts } from '@/lib/products'
 
 interface SidebarItem {
   name: string
@@ -84,6 +89,12 @@ export default function DashboardLayout({
   const router = useRouter()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [counts, setCounts] = useState({
+    products: 0,
+    orders: 0,
+    customers: 0,
+    newsletter: 0
+  })
   
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
@@ -94,6 +105,77 @@ export default function DashboardLayout({
     initial: 'A',
   })
   const isLoginPage = pathname === '/dashboard/login'
+
+  // Load counts dynamically for the sidebar badges
+  useEffect(() => {
+    async function loadCounts() {
+      let productsCount = 0
+      let ordersCount = 0
+      let customersCount = 0
+      let subscribersCount = 0
+
+      // 1. Products
+      try {
+        const res = await getProductsAction()
+        if (res.success && res.data && Array.isArray(res.data)) {
+          productsCount = res.data.length
+        } else {
+          const stored = localStorage.getItem('nursery_products')
+          productsCount = stored ? JSON.parse(stored).length : allProducts.length
+        }
+      } catch {
+        productsCount = allProducts.length
+      }
+
+      // 2. Orders
+      try {
+        const res = await getOrdersAction()
+        if (res.success && res.data && Array.isArray(res.data)) {
+          ordersCount = res.data.length
+        } else {
+          const stored = localStorage.getItem('nursery_orders')
+          ordersCount = stored ? JSON.parse(stored).length : 5
+        }
+      } catch {
+        ordersCount = 5
+      }
+
+      // 3. Customers
+      try {
+        const res = await getUsersAction()
+        if (res.success && res.data && Array.isArray(res.data)) {
+          customersCount = res.data.length
+        } else {
+          const stored = localStorage.getItem('nursery_profiles')
+          customersCount = stored ? JSON.parse(stored).length : 5
+        }
+      } catch {
+        customersCount = 5
+      }
+
+      // 4. Newsletter Subscribers
+      try {
+        const res = await getSubscribersAction()
+        if (res.success && res.data && Array.isArray(res.data)) {
+          subscribersCount = res.data.length
+        } else {
+          const stored = localStorage.getItem('nursery_subs')
+          subscribersCount = stored ? JSON.parse(stored).length : 12
+        }
+      } catch {
+        subscribersCount = 12
+      }
+
+      setCounts({
+        products: productsCount,
+        orders: ordersCount,
+        customers: customersCount,
+        newsletter: subscribersCount
+      })
+    }
+
+    loadCounts()
+  }, [pathname])
 
   // Header Search functionality states
   const [searchQuery, setSearchQuery] = useState('')
@@ -313,7 +395,34 @@ export default function DashboardLayout({
                   )}
                 />
                 {!isSidebarCollapsed && <span>{item.name}</span>}
-                {!isSidebarCollapsed && isActive && item.name !== 'AI Catalog' && (
+                
+                {/* Dynamic counts badges */}
+                {!isSidebarCollapsed && item.name === 'Products' && (
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/15 ml-auto flex items-center gap-1 shrink-0">
+                    <Sprout className="w-2.5 h-2.5 text-white" />
+                    <span>{counts.products}</span>
+                  </span>
+                )}
+                {!isSidebarCollapsed && item.name === 'Orders' && (
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/15 ml-auto flex items-center gap-1 shrink-0">
+                    <ShoppingBag className="w-2.5 h-2.5 text-white" />
+                    <span>{counts.orders}</span>
+                  </span>
+                )}
+                {!isSidebarCollapsed && item.name === 'Customers' && (
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/15 ml-auto flex items-center gap-1 shrink-0">
+                    <User className="w-2.5 h-2.5 text-white" />
+                    <span>{counts.customers}</span>
+                  </span>
+                )}
+                {!isSidebarCollapsed && item.name === 'Newsletter' && (
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/15 ml-auto flex items-center gap-1 shrink-0">
+                    <Mail className="w-2.5 h-2.5 text-white" />
+                    <span>{counts.newsletter}</span>
+                  </span>
+                )}
+
+                {!isSidebarCollapsed && isActive && !['AI Catalog', 'Products', 'Orders', 'Customers', 'Newsletter'].includes(item.name) && (
                   <div className="ml-auto w-1.5 h-1.5 bg-secondary rounded-full" />
                 )}
                 {!isSidebarCollapsed && item.name === 'AI Catalog' && (
@@ -437,6 +546,30 @@ export default function DashboardLayout({
                     <item.icon className={isActive ? 'text-secondary' : 'text-neutral-400'} size={18} />
                     <span>{item.name}</span>
                   </div>
+                  {item.name === 'Products' && (
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/25 flex items-center gap-1 shrink-0">
+                      <Sprout className="w-2.5 h-2.5 text-white" />
+                      <span>{counts.products}</span>
+                    </span>
+                  )}
+                  {item.name === 'Orders' && (
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/25 flex items-center gap-1 shrink-0">
+                      <ShoppingBag className="w-2.5 h-2.5 text-white" />
+                      <span>{counts.orders}</span>
+                    </span>
+                  )}
+                  {item.name === 'Customers' && (
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/25 flex items-center gap-1 shrink-0">
+                      <User className="w-2.5 h-2.5 text-white" />
+                      <span>{counts.customers}</span>
+                    </span>
+                  )}
+                  {item.name === 'Newsletter' && (
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/25 flex items-center gap-1 shrink-0">
+                      <Mail className="w-2.5 h-2.5 text-white" />
+                      <span>{counts.newsletter}</span>
+                    </span>
+                  )}
                   {item.name === 'AI Catalog' && (
                     <span className={cn(
                       "text-[7.5px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded shrink-0",
