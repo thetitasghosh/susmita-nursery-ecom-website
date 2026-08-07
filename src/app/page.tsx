@@ -17,7 +17,7 @@ export default function Home() {
         <HeroSection />
         <CategoriesSection />
         <FeaturedProducts />
-        <ValueProposition />
+        {/* <ValueProposition /> */}
         {/* <ARShowcase /> */}
         {/* <TestimonialsSection /> */}
         {/* <GallerySection /> */}
