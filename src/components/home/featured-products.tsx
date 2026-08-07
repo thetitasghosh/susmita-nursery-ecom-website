@@ -16,7 +16,7 @@ export function FeaturedProducts() {
 
   useEffect(() => {
     let active = true;
-    
+
     // Check if we have cached products to immediately show so we can disable the loading state
     const cachedProducts = getCachedProducts();
     if (cachedProducts && cachedProducts.length > 0) {
@@ -58,7 +58,7 @@ export function FeaturedProducts() {
   return (
     <section className="py-20 md:py-28 bg-muted/30 border-b border-border/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
@@ -74,9 +74,9 @@ export function FeaturedProducts() {
             Best Sellers Deck
           </h2>
           <div className="h-1 w-12 bg-accent mx-auto rounded-full" />
-          <p className="text-sm sm:text-base text-muted-foreground font-light max-w-md mx-auto">
+          {/* <p className="text-sm sm:text-base text-muted-foreground font-light max-w-md mx-auto">
             Bring nature home with our most cherished, healthy plant specimens grown with absolute horticultural care.
-          </p>
+          </p> */}
         </motion.div>
 
         {/* Mobile View: 2-Product Swipeable Carousel */}
@@ -128,19 +128,19 @@ export function FeaturedProducts() {
         <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12">
           {loading
             ? Array.from({ length: 5 }).map((_, idx) => (
-                <div key={idx} className="h-[360px] bg-muted/60 animate-pulse rounded-3xl border border-border/40" />
-              ))
+              <div key={idx} className="h-[360px] bg-muted/60 animate-pulse rounded-3xl border border-border/40" />
+            ))
             : featured.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 25 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.08 }}
-                  className="h-full"
-                >
-                  <ProductCard product={product} />
-                </motion.div>
-              ))}
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 25 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.08 }}
+                className="h-full"
+              >
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
         </div>
 
         {/* View All Action */}
