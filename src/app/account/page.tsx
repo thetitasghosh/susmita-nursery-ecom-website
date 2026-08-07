@@ -83,7 +83,7 @@ interface PlantReservation {
 export default function UserAccountPage() {
   const { user, profile: authProfile, isLoadingUser, logoutUser, addToast, wishlist, refreshSession } = useShop()
   const [activeTab, setActiveTab] = useState<'reservations' | 'addresses' | 'profile'>('reservations')
-  
+
   // Profile State
   const [profile, setProfile] = useState(DEFAULT_PROFILE)
   const [isEditingProfile, setIsEditingProfile] = useState(false)
@@ -132,7 +132,7 @@ export default function UserAccountPage() {
       const email = (user?.email as string) || ''
       const phone = (authProfile?.phone as string) || ''
       const joinedDate = user?.created_at ? new Date(user.created_at as string).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'October 2024'
-      
+
       const newProf = {
         name,
         email,
@@ -148,7 +148,7 @@ export default function UserAccountPage() {
 
   const loadUserData = useCallback(async () => {
     if (!user) return
-    
+
     // 1. Load Addresses
     try {
       const addrRes = await getAddressesAction()
@@ -208,11 +208,11 @@ export default function UserAccountPage() {
         const mappedReservations = rawOrders.map((ord) => ({
           id: ord.id,
           date: new Date(ord.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-          status: (ord.order_status === 'processing' 
-            ? 'Preparing Plants' 
-            : ord.order_status === 'ready_for_pickup' 
-            ? 'Ready for Pickup' 
-            : 'Fulfilled In-Store') as 'Ready for Pickup' | 'Preparing Plants' | 'Fulfilled In-Store',
+          status: (ord.order_status === 'processing'
+            ? 'Preparing Plants'
+            : ord.order_status === 'ready_for_pickup'
+              ? 'Ready for Pickup'
+              : 'Fulfilled In-Store') as 'Ready for Pickup' | 'Preparing Plants' | 'Fulfilled In-Store',
           storeLocation: ord.address || 'Susmita Nursery Store, Gangni, Badkulla, Nadia, 741121, W.B.',
           storeHours: '9:00 AM – 8:00 PM (Mon – Sun)',
           notes: ord.notes || '',
@@ -375,7 +375,7 @@ export default function UserAccountPage() {
           <div className="w-full max-w-md bg-card border border-border/80 rounded-[32px] p-6 md:p-8 shadow-2xl flex flex-col items-center">
             <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 flex items-center justify-center border border-border bg-white shadow-sm mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logos/logo-sn.jpeg" alt="Susmita Nursery Logo" className="object-cover w-full h-full" />
+              <Image width={50} height={50} quality={100} priority src="/logos/logo-sn.jpeg" alt="Susmita Nursery Logo" className="object-cover w-full h-full" />
             </div>
             <h1 className="text-xl font-bold text-neutral-dark tracking-tight">Access Your Account</h1>
             <p className="text-xs text-muted-foreground text-center mt-1 mb-6">
@@ -397,7 +397,7 @@ export default function UserAccountPage() {
         {/* Sleek Profile Banner */}
         <div className="bg-gradient-to-r from-primary-emerald via-emerald-900 to-primary text-white pt-10 pb-14 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
           <div className="absolute -right-16 -top-16 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-          
+
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
             <div className="flex items-center gap-5">
               <div className="relative shrink-0">
@@ -455,56 +455,51 @@ export default function UserAccountPage() {
         {/* Main Workspace */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            
+
             {/* Sidebar Tabs */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
                 <div className="bg-card border border-border/80 rounded-2xl p-2.5 shadow-sm space-y-1">
                   <button
                     onClick={() => setActiveTab('reservations')}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                      activeTab === 'reservations'
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-foreground hover:bg-muted'
-                    }`}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === 'reservations'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-foreground hover:bg-muted'
+                      }`}
                   >
                     <span className="flex items-center gap-2.5">
                       <Store size={16} />
                       In-Store Reservations
                     </span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                      activeTab === 'reservations' ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
-                    }`}>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeTab === 'reservations' ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
+                      }`}>
                       {reservations.length}
                     </span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('addresses')}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                      activeTab === 'addresses'
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-foreground hover:bg-muted'
-                    }`}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === 'addresses'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-foreground hover:bg-muted'
+                      }`}
                   >
                     <span className="flex items-center gap-2.5">
                       <MapPin size={16} />
                       Saved Addresses
                     </span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                      activeTab === 'addresses' ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
-                    }`}>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeTab === 'addresses' ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
+                      }`}>
                       {addresses.length}
                     </span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('profile')}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                      activeTab === 'profile'
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-foreground hover:bg-muted'
-                    }`}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === 'profile'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-foreground hover:bg-muted'
+                      }`}
                   >
                     <span className="flex items-center gap-2.5">
                       <User size={16} />
@@ -578,7 +573,7 @@ export default function UserAccountPage() {
 
             {/* Main Content Right */}
             <div className="lg:col-span-3">
-              
+
               {/* TAB 1: IN-STORE RESERVATIONS */}
               {activeTab === 'reservations' && (
                 <motion.div
@@ -598,17 +593,16 @@ export default function UserAccountPage() {
                     {reservations.length > 0 ? (
                       reservations.map((res) => (
                         <div key={res.id} className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow space-y-4">
-                          
+
                           {/* Reservation Top Bar */}
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-4">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2.5">
                                 <span className="font-serif font-bold text-base text-foreground">{res.id}</span>
-                                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1 ${
-                                  res.status === 'Ready for Pickup'
-                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                    : 'bg-neutral-100 text-neutral-700 border border-neutral-300'
-                                }`}>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1 ${res.status === 'Ready for Pickup'
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                  : 'bg-neutral-100 text-neutral-700 border border-neutral-300'
+                                  }`}>
                                   {res.status === 'Ready for Pickup' ? <CheckCircle2 size={12} /> : <Store size={12} />}
                                   {res.status}
                                 </span>
@@ -895,9 +889,9 @@ export default function UserAccountPage() {
                     <h3 className="text-sm font-serif font-bold text-foreground">Marketing & Newsletter Preferences</h3>
                     <div className="space-y-2.5 text-xs">
                       <label className="flex items-center gap-3 cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={isNewsletterActive} 
+                        <input
+                          type="checkbox"
+                          checked={isNewsletterActive}
                           onChange={async (e) => {
                             const val = e.target.checked
                             setIsNewsletterActive(val)
@@ -914,7 +908,7 @@ export default function UserAccountPage() {
                               addToast('Error syncing preferences.', 'error')
                             }
                           }}
-                          className="rounded text-primary focus:ring-primary h-4 w-4" 
+                          className="rounded text-primary focus:ring-primary h-4 w-4"
                         />
                         <span>Receive promotional newsletters, weekend care guides, and exclusive plant coupons</span>
                       </label>
@@ -1126,7 +1120,7 @@ function InlineAuthForms() {
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
-  
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -1184,17 +1178,15 @@ function InlineAuthForms() {
       <div className="flex bg-muted/60 p-1 rounded-xl mb-6 text-xs font-semibold">
         <button
           onClick={() => { setActiveTab('signin'); setError(null); }}
-          className={`flex-1 py-2 rounded-lg transition-all cursor-pointer ${
-            activeTab === 'signin' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
-          }`}
+          className={`flex-1 py-2 rounded-lg transition-all cursor-pointer ${activeTab === 'signin' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            }`}
         >
           Sign In
         </button>
         <button
           onClick={() => { setActiveTab('signup'); setError(null); }}
-          className={`flex-1 py-2 rounded-lg transition-all cursor-pointer ${
-            activeTab === 'signup' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
-          }`}
+          className={`flex-1 py-2 rounded-lg transition-all cursor-pointer ${activeTab === 'signup' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            }`}
         >
           Register
         </button>
