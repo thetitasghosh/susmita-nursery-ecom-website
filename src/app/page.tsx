@@ -11,7 +11,7 @@ import { NurseryBanner } from "@/components/home/nursery-banner";
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col bg-background font-sans">
+    <main className="min-h-[100dvh] flex flex-col bg-background font-sans">
       <Navbar />
       <div className="flex-1">
         <HeroSection />
@@ -20,10 +20,10 @@ export default function Home() {
         <FeaturedProducts />
         {/* <ARShowcase /> */}
         {/* <TestimonialsSection /> */}
-        <GallerySection />
+        {/* <GallerySection /> */}
         <NurseryBanner />
       </div>
       <Footer />
     </main>
-  );
+);
 }

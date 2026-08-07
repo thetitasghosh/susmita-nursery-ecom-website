@@ -3,6 +3,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ShopProvider } from "@/lib/shop-context";
 import { Inter, Cormorant_Garamond } from "next/font/google";
+import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -90,7 +91,12 @@ export default function RootLayout({
       )}
     >
       <body className="antialiased bg-background text-foreground selection:bg-primary/20 selection:text-primary">
-        <ShopProvider>{children}</ShopProvider>
+        <ShopProvider>
+          <div className="pb-16 md:pb-0 min-h-[100dvh] flex flex-col">
+            {children}
+          </div>
+          <MobileTabBar />
+        </ShopProvider>
       </body>
     </html>
   );

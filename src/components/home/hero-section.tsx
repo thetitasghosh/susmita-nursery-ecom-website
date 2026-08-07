@@ -92,7 +92,7 @@ export function HeroSection() {
       >
         <CarouselContent className="-ml-0">
           {slides.map((slide, idx) => (
-            <CarouselItem key={idx} className="pl-0 relative min-h-[80vh] md:min-h-[55vh] flex items-center">
+            <CarouselItem key={idx} className="pl-0 relative min-h-[50vh] sm:min-h-[60vh] md:min-h-[55vh] flex items-center">
               {/* Background Banner Image */}
               <div className="absolute inset-0 z-0 bg-background">
                 <Image
@@ -107,7 +107,7 @@ export function HeroSection() {
               </div>
 
               {/* Content Container */}
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-20 py-24 md:py-36">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-20 py-12 sm:py-20 md:py-36">
                 <div className="max-w-2xl text-left text-white">
 
                   {/* Eyebrow badge */}
@@ -115,14 +115,14 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 15 }}
                     animate={current === idx ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
-                    className="flex items-center gap-2.5 mb-6"
+                    className="flex items-center gap-2.5 mb-4 md:mb-6"
                   >
-                    <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 text-secondary font-sans font-semibold text-[10px] uppercase tracking-wider">
-                      <Leaf className="w-3 h-3 text-secondary" />
+                    <div className="flex items-center gap-1.5 px-3 py-0.5 md:px-3.5 md:py-1 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 text-secondary font-sans font-semibold text-[9px] md:text-[10px] uppercase tracking-wider">
+                      <Leaf className="w-2.5 h-2.5 md:w-3 md:h-3 text-secondary" />
                       <span>{slide.eyebrow}</span>
                     </div>
                     {slide.badgeText && (
-                      <span className="bg-accent text-neutral-900 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider font-sans">
+                      <span className="bg-accent text-neutral-900 text-[8px] md:text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider font-sans">
                         {slide.badgeText}
                       </span>
                     )}
@@ -133,7 +133,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={current === idx ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
-                    className="text-4xl sm:text-5xl lg:text-7xl font-bold font-serif leading-tight tracking-tight mb-3"
+                    className="text-3xl sm:text-5xl lg:text-7xl font-bold font-serif leading-tight tracking-tight mb-2 md:mb-3"
                   >
                     {slide.title}
                   </motion.h1>
@@ -143,7 +143,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={current === idx ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ duration: 0.6, delay: 0.3 }}
-                    className="text-xl sm:text-2xl lg:text-3xl text-neutral-200 mb-6 font-light font-serif italic"
+                    className="text-lg sm:text-2xl lg:text-3xl text-neutral-200 mb-4 md:mb-6 font-light font-serif italic"
                   >
                     {slide.subtitle}
                   </motion.h2>
@@ -153,7 +153,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={current === idx ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
-                    className="text-sm sm:text-base text-neutral-300 mb-8 max-w-lg leading-relaxed font-sans font-light"
+                    className="text-xs sm:text-base text-neutral-300 mb-6 md:mb-8 max-w-lg leading-relaxed font-sans font-light"
                   >
                     {slide.description}
                   </motion.p>
@@ -163,17 +163,17 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={current === idx ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ duration: 0.6, delay: 0.5 }}
-                    className="flex flex-wrap gap-4"
+                    className="flex flex-wrap gap-3 md:gap-4"
                   >
                     <Link href={slide.ctaLink}>
-                      <Button size="lg" className="bg-primary hover:bg-primary-emerald text-white font-semibold rounded-full px-8 shadow-lg shadow-primary/20 transition-all duration-300 flex items-center gap-2 cursor-pointer group-hover:translate-x-0.5">
+                      <Button size="sm" className="md:h-11 md:px-8 bg-primary hover:bg-primary-emerald text-white font-semibold rounded-full px-6 shadow-lg shadow-primary/20 transition-all duration-300 flex items-center gap-1.5 cursor-pointer group-hover:translate-x-0.5 text-xs md:text-sm">
                         <span>{slide.ctaText}</span>
-                        <Leaf className="w-4 h-4 text-secondary" />
+                        <Leaf className="w-3.5 h-3.5 text-secondary" />
                       </Button>
                     </Link>
                     <Link href={slide.secondaryCtaLink}>
-                      <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 hover:text-white rounded-full px-8 backdrop-blur-sm cursor-pointer">
-                        {slide.secondaryCtaText === 'Book a Visit' && <Calendar size={14} className="mr-1.5" />}
+                      <Button size="sm" variant="outline" className="md:h-11 md:px-8 border-white/30 text-white hover:bg-white/10 hover:text-white rounded-full px-6 backdrop-blur-sm cursor-pointer text-xs md:text-sm">
+                        {slide.secondaryCtaText === 'Book a Visit' && <Calendar size={12} className="mr-1 md:mr-1.5" />}
                         <span>{slide.secondaryCtaText}</span>
                       </Button>
                     </Link>
