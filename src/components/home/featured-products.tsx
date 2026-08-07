@@ -5,13 +5,14 @@ import { ProductCard } from '@/components/products/product-card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { Product } from '@/lib/products'
-import { Leaf } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Leaf, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
 import { fetchProductsWithCache, getCachedProducts } from '@/utils/product-cache'
 
 export function FeaturedProducts() {
   const [featured, setFeatured] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let active = true;
@@ -43,6 +44,17 @@ export function FeaturedProducts() {
     };
   }, []);
 
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current
+      const scrollTo =
+        direction === 'left'
+          ? scrollLeft - clientWidth
+          : scrollLeft + clientWidth
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' })
+    }
+  }
+
   return (
     <section className="py-20 md:py-28 bg-muted/30 border-b border-border/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,8 +79,53 @@ export function FeaturedProducts() {
           </p>
         </motion.div>
 
-        {/* Dynamic Bestsellers Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12">
+        {/* Mobile View: 2-Product Swipeable Carousel */}
+        <div className="sm:hidden flex flex-col items-center mb-12 w-full">
+          {loading ? (
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <div className="h-[280px] bg-muted/60 animate-pulse rounded-2xl border border-border/40" />
+              <div className="h-[280px] bg-muted/60 animate-pulse rounded-2xl border border-border/40" />
+            </div>
+          ) : (
+            <div
+              ref={scrollRef}
+              className="flex gap-4 w-full overflow-x-auto snap-x snap-mandatory touch-pan-x pb-4"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {featured.map((product) => (
+                <div
+                  key={product.id}
+                  className="w-[calc(50%-8px)] flex-shrink-0 snap-start h-full"
+                >
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Navigation Controls */}
+          {!loading && featured.length > 2 && (
+            <div className="flex items-center gap-4 mt-2">
+              <button
+                onClick={() => scroll('left')}
+                className="p-2.5 border border-border bg-white text-foreground hover:bg-primary hover:text-white rounded-full transition-colors cursor-pointer shadow-sm"
+                aria-label="Previous products"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                onClick={() => scroll('right')}
+                className="p-2.5 border border-border bg-white text-foreground hover:bg-primary hover:text-white rounded-full transition-colors cursor-pointer shadow-sm"
+                aria-label="Next products"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Dynamic Bestsellers Grid (Tablet & Desktop Only) */}
+        <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12">
           {loading
             ? Array.from({ length: 5 }).map((_, idx) => (
                 <div key={idx} className="h-[360px] bg-muted/60 animate-pulse rounded-3xl border border-border/40" />

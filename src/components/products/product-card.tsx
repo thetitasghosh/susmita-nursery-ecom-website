@@ -8,6 +8,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useShop } from '@/lib/shop-context'
 import { Product } from '@/lib/products'
+import { WHATSAPP_NUMBER } from '@/constants'
 
 interface ProductCardProps {
   product: Product
@@ -18,6 +19,27 @@ export function ProductCard({ product }: ProductCardProps) {
   const wishlisted = isWishlisted(product.id)
 
   const [isAdding, setIsAdding] = useState(false)
+
+  const pageUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/products/${product.slug || product.id}`
+    : `https://susmitanursery.com/products/${product.slug || product.id}`
+  const scientific = product.scientificName ? ` (${product.scientificName})` : ''
+  const whatsappMessage = `Hello Susmita Nursery! I want to discuss and buy this plant:
+
+Plant Name: ${product.name}${scientific}
+Price: ₹${product.price.toFixed(2)}
+Selected Size: Standard
+Quantity: 1
+
+Botanical Details:
+- Category: ${product.category}
+- Light Requirement: ${product.details?.light || 'Standard'}
+- Watering Needs: ${product.details?.water || 'Standard'}
+- Care Difficulty: ${product.difficulty || 'Easy'}
+- Air Purifying: ${product.airPurifying || 'Yes'}
+
+Product Link: ${pageUrl}`
+  const whatsappUrl = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(whatsappMessage)}`
 
   return (
     <Link href={`/products/${product.slug || product.id}`}>
@@ -89,33 +111,66 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
 
-          {/* Footer details: Price on Left, Add to Cart on Right */}
-          <div className="flex items-center justify-between pt-1">
-            <span className="font-sans font-bold text-primary text-lg tabular-nums">
-              ₹{product.price.toFixed(2)}
-            </span>
-            <Button
-              size="sm"
-              disabled={isAdding}
-              className="bg-primary-emerald hover:bg-primary-emerald/90 text-white font-medium rounded-full px-4 py-1.5 text-xs cursor-pointer flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-75"
-              onClick={async (e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                setIsAdding(true)
-                try {
-                  await addToCart(product, 1)
-                } finally {
-                  setIsAdding(false)
-                }
-              }}
-            >
-              {isAdding ? (
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <ShoppingCart size={12} />
-              )}
-              <span>{isAdding ? 'Adding' : 'Add'}</span>
-            </Button>
+          {/* Footer details: Price and Buttons */}
+          <div className="flex flex-col gap-3 pt-2.5 border-t border-border/40">
+            <div className="flex items-center justify-between">
+              <span className="font-sans font-extrabold text-primary text-base tabular-nums">
+                ₹{product.price.toFixed(2)}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2 w-full">
+              {/* Add to Cart Button */}
+              <Button
+                size="sm"
+                disabled={isAdding}
+                className="flex-1 bg-primary-emerald hover:bg-primary-emerald/90 text-white font-semibold rounded-full h-8 px-3 text-[11px] cursor-pointer flex items-center justify-center gap-1.5 transition-all shadow-sm disabled:opacity-75"
+                onClick={async (e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setIsAdding(true)
+                  try {
+                    await addToCart(product, 1)
+                  } finally {
+                    setIsAdding(false)
+                  }
+                }}
+              >
+                {isAdding ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <ShoppingCart size={13} />
+                )}
+                <span>{isAdding ? 'Adding' : 'Add to Cart'}</span>
+              </Button>
+
+              {/* WhatsApp Button */}
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.stopPropagation()
+                }}
+                className="flex-shrink-0"
+              >
+                <Button
+                  size="sm"
+                  className="bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-full w-8 h-8 p-0 flex items-center justify-center cursor-pointer transition-all shadow-sm border border-[#20ba5a]/20"
+                >
+                  <div className="relative w-4.5 h-4.5">
+                    <Image
+                      src="/images/whatsapp-2.png"
+                      alt="WhatsApp"
+                      fill
+                      sizes="18px"
+                      className="object-contain"
+                      priority
+                    />
+                  </div>
+                </Button>
+              </a>
+            </div>
           </div>
         </div>
       </motion.div>

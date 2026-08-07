@@ -2,7 +2,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { HeroSection } from "@/components/home/hero-section";
 import { CategoriesSection } from "@/components/home/categories-section";
-import { ValueProposition } from "@/components/home/value-proposition";
+// import { ValueProposition } from "@/components/home/value-proposition";
 import { FeaturedProducts } from "@/components/home/featured-products";
 // import { ARShowcase } from "@/components/home/ar-showcase";
 // import { TestimonialsSection } from "@/components/home/testimonials-section";
