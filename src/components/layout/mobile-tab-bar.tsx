@@ -63,7 +63,7 @@ export function MobileTabBar() {
           <div className="h-8 flex items-center justify-center flex-shrink-0">
             <Sprout className="w-5 h-5" />
           </div>
-          <span className="text-[10px] font-medium tracking-wide">Products</span>
+          <span className="text-[10px] font-medium tracking-wide">Plants</span>
         </Link>
 
         {/* 3. WhatsApp Tab (PNG Image, aligned inline) */}
